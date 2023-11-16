@@ -1,0 +1,26 @@
+{
+  "name": "conform-to-valibot",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "chimame",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chimame/conform-to-valibot"
+  },
+  "bugs": {
+    "url": "https://github.com/chimame/conform-to-valibot/issues"
+  },
+  "peerDependencies": {
+    "@conform-to/dom": "^0.9.1",
+    "valibot": "^0.20.1"
+  },
+  "devDependencies": {
+    "@conform-to/dom": "^0.9.1",
+    "valibot": "^0.20.1"
+  }
+}
