@@ -15,20 +15,6 @@ export function parse<Schema extends BaseSchema & { type: string }>(
   payload: FormData | URLSearchParams,
   config: {
     schema: Schema | ((intent: string) => Schema);
-    async?: false;
-  },
-): Submission<Output<Schema>>;
-export function parse<Schema extends BaseSchema & { type: string }>(
-  payload: FormData | URLSearchParams,
-  config: {
-    schema: Schema | ((intent: string) => Schema);
-    async: true;
-  },
-): Promise<Submission<Output<Schema>>>;
-export function parse<Schema extends BaseSchema & { type: string }>(
-  payload: FormData | URLSearchParams,
-  config: {
-    schema: Schema | ((intent: string) => Schema);
   },
 ): Submission<Output<Schema>> | Promise<Submission<Output<Schema>>> {
   return baseParse<Output<Schema>>(payload, {

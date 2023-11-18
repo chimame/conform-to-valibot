@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest"
   },
   "author": "chimame",
   "license": "MIT",
@@ -21,6 +21,7 @@
   },
   "devDependencies": {
     "@conform-to/dom": "^0.9.1",
-    "valibot": "^0.20.1"
+    "valibot": "^0.20.1",
+    "vitest": "^0.34.6"
   }
 }

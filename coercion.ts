@@ -2,7 +2,7 @@ import {
   type BaseSchema,
   type Output,
   object,
-  transform,
+  coerce,
   optional,
   nullable,
   nullish,
@@ -77,13 +77,13 @@ export function enableTypeCoercion<Type extends BaseSchema & { type: string, wra
     type.type === 'literal' ||
     type.type ===  'enum'
   ) {
-    schema = transform(schema, (output) => coerceString(output))
+    schema = coerce(schema, (output) => coerceString(output))
   } else if (type.type === 'number') {
-    schema = transform(schema, (output) => coerceString(output, Number))
+    schema = coerce(schema, (output) => coerceString(output, Number))
   } else if (type.type === 'boolean') {
-    schema = transform(schema, (output) => coerceString(output, (text) => (text === 'on' ? true : text)))
+    schema = coerce(schema, (output) => coerceString(output, (text) => (text === 'on' ? true : text)))
   } else if (type.type === 'date') {
-    schema = transform(schema, (output) => coerceString(output, (timestamp) => {
+    schema = coerce(schema, (output) => coerceString(output, (timestamp) => {
       const date = new Date(timestamp);
 
       // z.date() does not expose a quick way to set invalid_date error
@@ -96,9 +96,9 @@ export function enableTypeCoercion<Type extends BaseSchema & { type: string, wra
       return date;
     }))
   } else if (type.type === 'bigint') {
-    schema = transform(schema, (output) => coerceString(output, BigInt))
+    schema = coerce(schema, (output) => coerceString(output, BigInt))
   } else if (type.type === 'array') {
-    schema = transform(schema, (output) => {
+    schema = coerce(schema, (output) => {
       // No preprocess needed if the value is already an array
       if (Array.isArray(output)) {
         return output;
