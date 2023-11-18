@@ -3,6 +3,15 @@ import {
   type Output,
   object,
   transform,
+  optional,
+  nullable,
+  nullish,
+  nonOptional,
+  nonNullable,
+  nonNullish,
+  nonOptionalAsync,
+  nonNullableAsync,
+  nonNullishAsync,
 } from 'valibot';
 
 /**
@@ -49,7 +58,7 @@ export function coerceFile(file: unknown) {
  * Reconstruct the provided schema with additional preprocessing steps
  * This coerce empty values to undefined and transform strings to the correct type
  */
-export function enableTypeCoercion<Type extends BaseSchema & { type: string }>(
+export function enableTypeCoercion<Type extends BaseSchema & { type: string, wrapped?: BaseSchema & { type: string }, async?: boolean }>(
   type: Type,
   cache = new Map<Type, BaseSchema & { type: string }>(),
 ): BaseSchema<Output<Type>> {
@@ -105,6 +114,24 @@ export function enableTypeCoercion<Type extends BaseSchema & { type: string }>(
       // Wrap it in an array otherwise
       return [output];
     })
+  } else if (type.type === 'optional') {
+    schema = optional(enableTypeCoercion(type.wrapped!));
+  } else if (type.type === 'nullish') {
+    schema = nullish(enableTypeCoercion(type.wrapped!));
+  } else if(type.type === 'nullable') {
+    schema = nullable(enableTypeCoercion(type.wrapped!));
+  } else if (type.type === 'non_optional' && type.async) {
+    schema = nonOptional(enableTypeCoercion(type.wrapped!));
+  } else if (type.type === 'non_nullish' && type.async) {
+    schema = nonNullish(enableTypeCoercion(type.wrapped!));
+  } else if(type.type === 'non_nullable' && type.async) {
+    schema = nonNullable(enableTypeCoercion(type.wrapped!));
+  } else if (type.type === 'non_optional') {
+    schema = nonOptionalAsync(enableTypeCoercion(type.wrapped!));
+  } else if (type.type === 'non_nullish') {
+    schema = nonNullishAsync(enableTypeCoercion(type.wrapped!));
+  } else if(type.type === 'non_nullable') {
+    schema = nonNullableAsync(enableTypeCoercion(type.wrapped!));
   } else if (type.type === 'object') {
     const shape = Object.fromEntries(
       // @ts-ignore
