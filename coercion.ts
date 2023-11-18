@@ -66,8 +66,13 @@ export function enableTypeCoercion<
   },
 >(
   type: Type,
-  cache = new Map<Type, BaseSchema & { type: string }>(),
+  options?: {
+    wrapped?: any; // TODO: fix this type
+    cache?: Map<Type, BaseSchema & { type: string }>;
+  },
 ): BaseSchema<Output<Type>> {
+  const cache =
+    options?.cache ?? new Map<Type, BaseSchema & { type: string }>();
   const result = cache.get(type);
 
   // Return the cached schema if it's already processed
@@ -83,75 +88,89 @@ export function enableTypeCoercion<
     type.type === "literal" ||
     type.type === "enum"
   ) {
-    schema = coerce(schema, (output) => coerceString(output));
+    schema = coerce(
+      options?.wrapped ? options.wrapped(schema) : schema,
+      (output) => coerceString(output),
+    );
   } else if (type.type === "number") {
-    schema = coerce(schema, (output) => coerceString(output, Number));
+    schema = coerce(
+      options?.wrapped ? options.wrapped(schema) : schema,
+      (output) => coerceString(output, Number),
+    );
   } else if (type.type === "boolean") {
-    schema = coerce(schema, (output) =>
-      coerceString(output, (text) => (text === "on" ? true : text)),
+    schema = coerce(
+      options?.wrapped ? options.wrapped(schema) : schema,
+      (output) => coerceString(output, (text) => (text === "on" ? true : text)),
     );
   } else if (type.type === "date") {
-    schema = coerce(schema, (output) =>
-      coerceString(output, (timestamp) => {
-        const date = new Date(timestamp);
+    schema = coerce(
+      options?.wrapped ? options.wrapped(schema) : schema,
+      (output) => coerceString(output, (timestamp) => {
+          const date = new Date(timestamp);
 
-        // z.date() does not expose a quick way to set invalid_date error
-        // This gets around it by returning the original string if it's invalid
-        // See https://github.com/colinhacks/zod/issues/1526
-        if (Number.isNaN(date.getTime())) {
-          return timestamp;
-        }
+          // z.date() does not expose a quick way to set invalid_date error
+          // This gets around it by returning the original string if it's invalid
+          // See https://github.com/colinhacks/zod/issues/1526
+          if (Number.isNaN(date.getTime())) {
+            return timestamp;
+          }
 
-        return date;
-      }),
+          return date;
+        }),
     );
   } else if (type.type === "bigint") {
-    schema = coerce(schema, (output) => coerceString(output, BigInt));
+    schema = coerce(
+      options?.wrapped ? options.wrapped(schema) : schema,
+      (output) => coerceString(output, BigInt),
+    );
   } else if (type.type === "array") {
-    schema = coerce(schema, (output) => {
-      // No preprocess needed if the value is already an array
-      if (Array.isArray(output)) {
-        return output;
-      }
+    schema = coerce(
+      options?.wrapped ? options.wrapped(schema) : schema,
+      (output) => {
+        // No preprocess needed if the value is already an array
+        if (Array.isArray(output)) {
+          return output;
+        }
 
-      if (
-        typeof output === "undefined" ||
-        typeof coerceFile(output) === "undefined"
-      ) {
-        return [];
-      }
+        if (
+          typeof output === "undefined" ||
+          typeof coerceFile(output) === "undefined"
+        ) {
+          return [];
+        }
 
-      // Wrap it in an array otherwise
-      return [output];
-    });
+        // Wrap it in an array otherwise
+        return [output];
+      },
+    );
   } else if (type.type === "optional") {
-    schema = optional(enableTypeCoercion(type.wrapped!));
+    schema = enableTypeCoercion(type.wrapped!, { wrapped: optional });
   } else if (type.type === "nullish") {
-    schema = nullish(enableTypeCoercion(type.wrapped!));
+    schema = enableTypeCoercion(type.wrapped!, { wrapped: nullish });
   } else if (type.type === "nullable") {
-    schema = nullable(enableTypeCoercion(type.wrapped!));
+    schema = enableTypeCoercion(type.wrapped!, { wrapped: nullable });
   } else if (type.type === "non_optional" && type.async) {
-    schema = nonOptional(enableTypeCoercion(type.wrapped!));
+    schema = enableTypeCoercion(type.wrapped!, { wrapped: nonOptionalAsync });
   } else if (type.type === "non_nullish" && type.async) {
-    schema = nonNullish(enableTypeCoercion(type.wrapped!));
+    schema = enableTypeCoercion(type.wrapped!, { wrapped: nonNullishAsync });
   } else if (type.type === "non_nullable" && type.async) {
-    schema = nonNullable(enableTypeCoercion(type.wrapped!));
+    schema = enableTypeCoercion(type.wrapped!, { wrapped: nonNullableAsync });
   } else if (type.type === "non_optional") {
-    schema = nonOptionalAsync(enableTypeCoercion(type.wrapped!));
+    schema = enableTypeCoercion(type.wrapped!, { wrapped: nonOptional });
   } else if (type.type === "non_nullish") {
-    schema = nonNullishAsync(enableTypeCoercion(type.wrapped!));
+    schema = enableTypeCoercion(type.wrapped!, { wrapped: nonNullish });
   } else if (type.type === "non_nullable") {
-    schema = nonNullableAsync(enableTypeCoercion(type.wrapped!));
+    schema = enableTypeCoercion(type.wrapped!, { wrapped: nonNullable });
   } else if (type.type === "object") {
     const shape = Object.fromEntries(
       // @ts-ignore
       Object.entries(type.entries).map(([key, def]) => [
         key,
         // @ts-expect-error see message above
-        enableTypeCoercion(def, cache),
+        enableTypeCoercion(def, { cache }),
       ]),
     );
-    schema = object(shape);
+    schema = options?.wrapped ? options.wrapped(object(shape)) : object(shape);
   }
 
   if (type !== schema) {
