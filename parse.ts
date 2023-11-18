@@ -1,15 +1,11 @@
+import { type Submission, getName, parse as baseParse } from "@conform-to/dom";
 import {
-  type Submission,
-  getName,
-  parse as baseParse,
-} from '@conform-to/dom';
-import {
-  type Output,
   type BaseSchema,
+  type Output,
   SafeParseResult,
   safeParse,
-} from 'valibot';
-import { enableTypeCoercion } from './coercion';
+} from "valibot";
+import { enableTypeCoercion } from "./coercion";
 
 export function parse<Schema extends BaseSchema & { type: string }>(
   payload: FormData | URLSearchParams,
@@ -20,7 +16,7 @@ export function parse<Schema extends BaseSchema & { type: string }>(
   return baseParse<Output<Schema>>(payload, {
     resolve(payload, intent) {
       const schema = enableTypeCoercion(
-        typeof config.schema === 'function'
+        typeof config.schema === "function"
           ? config.schema(intent)
           : config.schema,
       );
@@ -35,22 +31,17 @@ export function parse<Schema extends BaseSchema & { type: string }>(
         }
 
         return {
-          error: result.issues.reduce<Record<string, string[]>>(
-            (result, e) => {
-              const name = e.path ? getName(e.path.map(d => d.key)) : e.input;
+          error: result.issues.reduce<Record<string, string[]>>((result, e) => {
+            const name = e.path ? getName(e.path.map((d) => d.key)) : e.input;
 
-              result[name] = [...(result[name] ?? []), e.message];
+            result[name] = [...(result[name] ?? []), e.message];
 
-              return result;
-            },
-            {},
-          ),
+            return result;
+          }, {}),
         };
       };
 
-      return resolveResult(
-        safeParse(schema, payload),
-      );
+      return resolveResult(safeParse(schema, payload));
     },
   });
 }

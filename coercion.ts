@@ -1,18 +1,18 @@
 import {
   type BaseSchema,
   type Output,
-  object,
   coerce,
-  optional,
+  nonNullable,
+  nonNullableAsync,
+  nonNullish,
+  nonNullishAsync,
+  nonOptional,
+  nonOptionalAsync,
   nullable,
   nullish,
-  nonOptional,
-  nonNullable,
-  nonNullish,
-  nonOptionalAsync,
-  nonNullableAsync,
-  nonNullishAsync,
-} from 'valibot';
+  object,
+  optional,
+} from "valibot";
 
 /**
  * Helpers for coercing string value
@@ -22,15 +22,15 @@ export function coerceString(
   value: unknown,
   transform?: (text: string) => unknown,
 ) {
-  if (typeof value !== 'string') {
+  if (typeof value !== "string") {
     return value;
   }
 
-  if (value === '') {
+  if (value === "") {
     return undefined;
   }
 
-  if (typeof transform !== 'function') {
+  if (typeof transform !== "function") {
     return value;
   }
 
@@ -43,9 +43,9 @@ export function coerceString(
  */
 export function coerceFile(file: unknown) {
   if (
-    typeof File !== 'undefined' &&
+    typeof File !== "undefined" &&
     file instanceof File &&
-    file.name === '' &&
+    file.name === "" &&
     file.size === 0
   ) {
     return undefined;
@@ -58,7 +58,13 @@ export function coerceFile(file: unknown) {
  * Reconstruct the provided schema with additional preprocessing steps
  * This coerce empty values to undefined and transform strings to the correct type
  */
-export function enableTypeCoercion<Type extends BaseSchema & { type: string, wrapped?: BaseSchema & { type: string }, async?: boolean }>(
+export function enableTypeCoercion<
+  Type extends BaseSchema & {
+    type: string;
+    wrapped?: BaseSchema & { type: string };
+    async?: boolean;
+  },
+>(
   type: Type,
   cache = new Map<Type, BaseSchema & { type: string }>(),
 ): BaseSchema<Output<Type>> {
@@ -73,31 +79,35 @@ export function enableTypeCoercion<Type extends BaseSchema & { type: string, wra
   let schema: any = type;
 
   if (
-    type.type === 'string' ||
-    type.type === 'literal' ||
-    type.type ===  'enum'
+    type.type === "string" ||
+    type.type === "literal" ||
+    type.type === "enum"
   ) {
-    schema = coerce(schema, (output) => coerceString(output))
-  } else if (type.type === 'number') {
-    schema = coerce(schema, (output) => coerceString(output, Number))
-  } else if (type.type === 'boolean') {
-    schema = coerce(schema, (output) => coerceString(output, (text) => (text === 'on' ? true : text)))
-  } else if (type.type === 'date') {
-    schema = coerce(schema, (output) => coerceString(output, (timestamp) => {
-      const date = new Date(timestamp);
+    schema = coerce(schema, (output) => coerceString(output));
+  } else if (type.type === "number") {
+    schema = coerce(schema, (output) => coerceString(output, Number));
+  } else if (type.type === "boolean") {
+    schema = coerce(schema, (output) =>
+      coerceString(output, (text) => (text === "on" ? true : text)),
+    );
+  } else if (type.type === "date") {
+    schema = coerce(schema, (output) =>
+      coerceString(output, (timestamp) => {
+        const date = new Date(timestamp);
 
-      // z.date() does not expose a quick way to set invalid_date error
-      // This gets around it by returning the original string if it's invalid
-      // See https://github.com/colinhacks/zod/issues/1526
-      if (isNaN(date.getTime())) {
-        return timestamp;
-      }
+        // z.date() does not expose a quick way to set invalid_date error
+        // This gets around it by returning the original string if it's invalid
+        // See https://github.com/colinhacks/zod/issues/1526
+        if (Number.isNaN(date.getTime())) {
+          return timestamp;
+        }
 
-      return date;
-    }))
-  } else if (type.type === 'bigint') {
-    schema = coerce(schema, (output) => coerceString(output, BigInt))
-  } else if (type.type === 'array') {
+        return date;
+      }),
+    );
+  } else if (type.type === "bigint") {
+    schema = coerce(schema, (output) => coerceString(output, BigInt));
+  } else if (type.type === "array") {
     schema = coerce(schema, (output) => {
       // No preprocess needed if the value is already an array
       if (Array.isArray(output)) {
@@ -105,34 +115,34 @@ export function enableTypeCoercion<Type extends BaseSchema & { type: string, wra
       }
 
       if (
-        typeof output === 'undefined' ||
-        typeof coerceFile(output) === 'undefined'
+        typeof output === "undefined" ||
+        typeof coerceFile(output) === "undefined"
       ) {
         return [];
       }
 
       // Wrap it in an array otherwise
       return [output];
-    })
-  } else if (type.type === 'optional') {
+    });
+  } else if (type.type === "optional") {
     schema = optional(enableTypeCoercion(type.wrapped!));
-  } else if (type.type === 'nullish') {
+  } else if (type.type === "nullish") {
     schema = nullish(enableTypeCoercion(type.wrapped!));
-  } else if(type.type === 'nullable') {
+  } else if (type.type === "nullable") {
     schema = nullable(enableTypeCoercion(type.wrapped!));
-  } else if (type.type === 'non_optional' && type.async) {
+  } else if (type.type === "non_optional" && type.async) {
     schema = nonOptional(enableTypeCoercion(type.wrapped!));
-  } else if (type.type === 'non_nullish' && type.async) {
+  } else if (type.type === "non_nullish" && type.async) {
     schema = nonNullish(enableTypeCoercion(type.wrapped!));
-  } else if(type.type === 'non_nullable' && type.async) {
+  } else if (type.type === "non_nullable" && type.async) {
     schema = nonNullable(enableTypeCoercion(type.wrapped!));
-  } else if (type.type === 'non_optional') {
+  } else if (type.type === "non_optional") {
     schema = nonOptionalAsync(enableTypeCoercion(type.wrapped!));
-  } else if (type.type === 'non_nullish') {
+  } else if (type.type === "non_nullish") {
     schema = nonNullishAsync(enableTypeCoercion(type.wrapped!));
-  } else if(type.type === 'non_nullable') {
+  } else if (type.type === "non_nullable") {
     schema = nonNullableAsync(enableTypeCoercion(type.wrapped!));
-  } else if (type.type === 'object') {
+  } else if (type.type === "object") {
     const shape = Object.fromEntries(
       // @ts-ignore
       Object.entries(type.entries).map(([key, def]) => [

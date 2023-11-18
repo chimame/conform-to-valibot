@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "format": "npx @biomejs/biome format --write .",
     "test": "vitest"
   },
   "author": "chimame",
@@ -20,6 +21,7 @@
     "valibot": "^0.20.1"
   },
   "devDependencies": {
+    "@biomejs/biome": "^1.3.3",
     "@conform-to/dom": "^0.9.1",
     "valibot": "^0.20.1",
     "vitest": "^0.34.6"
