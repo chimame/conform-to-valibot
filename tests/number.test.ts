@@ -10,6 +10,9 @@ describe("number", () => {
 
     expect(output).toMatchObject({ error: {}, value: { age: 20 } });
     expect(
+      parse(createFormData("age", ""), { schema }),
+    ).toMatchObject({ error: { age: ["Invalid type"] } });
+    expect(
       parse(createFormData("age", "non number"), { schema }),
     ).toMatchObject({ error: { age: ["Invalid type"] } });
   });

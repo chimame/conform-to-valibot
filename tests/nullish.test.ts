@@ -10,6 +10,9 @@ describe("nullish", () => {
 
     expect(output).toMatchObject({ error: {}, value: { age: undefined } });
     expect(
+      parse(createFormData("age", "20"), { schema }),
+    ).toMatchObject({ error: {}, value: { age: 20 } });
+    expect(
       parse(createFormData("age", "non number"), { schema }),
     ).toMatchObject({ error: { age: ["Invalid type"] } });
   });
