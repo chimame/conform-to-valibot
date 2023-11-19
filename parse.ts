@@ -12,7 +12,7 @@ export function parse<Schema extends BaseSchema & { type: string }>(
   config: {
     schema: Schema | ((intent: string) => Schema);
   },
-): Submission<Output<Schema>> | Promise<Submission<Output<Schema>>> {
+): Submission<Output<Schema>> {
   return baseParse<Output<Schema>>(payload, {
     resolve(payload, intent) {
       const schema = enableTypeCoercion(
