@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "check:format": "npx @biomejs/biome format .",
     "format": "npx @biomejs/biome format --write .",
     "test": "vitest"
   },
