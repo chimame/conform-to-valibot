@@ -1,11 +1,19 @@
 {
   "name": "conform-to-valibot",
   "version": "0.0.1",
-  "description": "",
-  "main": "index.js",
+  "description": "Conform helpers for integrating with Valibot",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
+    "build": "tsup",
     "check:format": "npx @biomejs/biome format .",
     "format": "npx @biomejs/biome format --write .",
+    "prepack": "npm run build",
+    "release": "semantic-release",
     "test": "vitest"
   },
   "author": "chimame",
@@ -17,6 +25,15 @@
   "bugs": {
     "url": "https://github.com/chimame/conform-to-valibot/issues"
   },
+  "keywords": [
+    "constraint-validation",
+    "form",
+    "form-validation",
+    "html",
+    "progressive-enhancement",
+    "validation",
+    "valibot"
+  ],
   "peerDependencies": {
     "@conform-to/dom": "^0.9.1",
     "valibot": "^0.20.1"
@@ -24,6 +41,10 @@
   "devDependencies": {
     "@biomejs/biome": "^1.3.3",
     "@conform-to/dom": "^0.9.1",
+    "@tsconfig/node16": "^16.1.1",
+    "semantic-release": "^22.0.8",
+    "tsup": "^8.0.0",
+    "typescript": "^5.2.2",
     "valibot": "^0.20.1",
     "vitest": "^0.34.6"
   }

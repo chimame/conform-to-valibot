@@ -1,0 +1,8 @@
+{
+  "extends": "@tsconfig/node16/tsconfig.json",
+  "compilerOptions": {
+    "resolveJsonModule": true,
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+  },
+  "include": ["**/*.ts", "tests/**/*.ts", "tsup.config.ts"]
+}
