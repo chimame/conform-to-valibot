@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { number, object, nullish} from "valibot";
+import { number, object, nullish } from "valibot";
 import { parse } from "../parse";
 import { createFormData } from "./helpers/FormData";
 
@@ -9,9 +9,10 @@ describe("nullish", () => {
     const output = parse(createFormData("age", ""), { schema });
 
     expect(output).toMatchObject({ error: {}, value: { age: undefined } });
-    expect(
-      parse(createFormData("age", "20"), { schema }),
-    ).toMatchObject({ error: {}, value: { age: 20 } });
+    expect(parse(createFormData("age", "20"), { schema })).toMatchObject({
+      error: {},
+      value: { age: 20 },
+    });
     expect(
       parse(createFormData("age", "non number"), { schema }),
     ).toMatchObject({ error: { age: ["Invalid type"] } });
