@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: main
+  pull_request:
+
+jobs:
+  install:
+    name: Install packages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup packages
+        uses: ./.github/actions/setup
+
+  format:
+    name: Run biome format
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup packages
+        uses: ./.github/actions/setup
+      - name: Biome check
+        run: npm run check:format
+
+  test:
+    name: Run test
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup packages
+        uses: ./.github/actions/setup
+      - name: Vitest tests
+        run: npm run test
