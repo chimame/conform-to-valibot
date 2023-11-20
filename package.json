@@ -20,7 +20,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/chimame/conform-to-valibot"
+    "url": "git+https://github.com/chimame/conform-to-valibot.git"
   },
   "bugs": {
     "url": "https://github.com/chimame/conform-to-valibot/issues"
