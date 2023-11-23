@@ -1,6 +1,13 @@
 import { describe, expect, test } from "vitest";
 import { parse } from "../parse";
-import { object, number, optional, nonNullish } from "valibot";
+import {
+  object,
+  number,
+  optional,
+  nonNullish,
+  union,
+  undefined_,
+} from "valibot";
 import { createFormData } from "./helpers/FormData";
 
 describe("nonOptional", () => {
@@ -16,6 +23,18 @@ describe("nonOptional", () => {
     ).toMatchObject({ error: { item: ["Invalid type"] } });
     expect(
       parse(createFormData("item2", "non Param"), { schema: schema1 }),
+    ).toMatchObject({ error: { item: ["Invalid type"] } });
+
+    const schema2 = object({
+      item: nonNullish(union([number(), undefined_()])),
+    });
+    const output2 = parse(input1, { schema: schema2 });
+    expect(output2).toMatchObject({ error: {}, value: { item: 1 } });
+    expect(
+      parse(createFormData("item", "non Number"), { schema: schema2 }),
+    ).toMatchObject({ error: { item: ["Invalid type"] } });
+    expect(
+      parse(createFormData("item2", "non Param"), { schema: schema2 }),
     ).toMatchObject({ error: { item: ["Invalid type"] } });
   });
 });

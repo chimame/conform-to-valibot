@@ -1,6 +1,5 @@
 import type {
   BaseSchema,
-  Output,
   array,
   bigint,
   boolean,
@@ -10,6 +9,7 @@ import type {
   number,
   picklist,
   string,
+  undefined_,
 } from "valibot";
 import {
   nullable,
@@ -20,6 +20,7 @@ import {
   nonOptional,
   object,
   coerce,
+  union,
 } from "valibot";
 
 /**
@@ -68,7 +69,8 @@ type WrapSchema =
   | typeof nullable
   | typeof nonNullable
   | typeof nonOptional
-  | typeof nonNullish;
+  | typeof nonNullish
+  | typeof union;
 
 type ValibotSchema =
   | ReturnType<typeof object>
@@ -80,7 +82,8 @@ type ValibotSchema =
   | ReturnType<typeof enum_>
   | ReturnType<typeof literal>
   | ReturnType<typeof number>
-  | ReturnType<typeof picklist>;
+  | ReturnType<typeof picklist>
+  | ReturnType<typeof undefined_>;
 
 type AllSchema = ValibotSchema | ReturnType<WrapSchema> | BaseSchema;
 
@@ -94,7 +97,7 @@ export function enableTypeCoercion<Type extends AllSchema>(
     wrap?: WrapSchema;
     cache?: Map<Type, AllSchema>;
   },
-): Output<Type> {
+): AllSchema {
   const cache = options?.cache ?? new Map<Type, AllSchema>();
   const result = cache.get(type);
 
@@ -117,7 +120,8 @@ export function enableTypeCoercion<Type extends AllSchema>(
   if (
     type.type === "string" ||
     type.type === "literal" ||
-    type.type === "enum"
+    type.type === "enum" ||
+    type.type === "undefined"
   ) {
     // @ts-expect-error
     schema = coerce(options?.wrap ? options.wrap(schema) : schema, (output) =>
@@ -194,6 +198,11 @@ export function enableTypeCoercion<Type extends AllSchema>(
     schema = options?.wrap ? options.wrap(schema) : schema;
   } else if (type.type === "non_nullable") {
     schema = enableTypeCoercion(type.wrapped, { wrap: nonNullable });
+    // @ts-expect-error
+    schema = options?.wrap ? options.wrap(schema) : schema;
+  } else if (type.type === "union") {
+    // @ts-expect-error
+    schema = union(type.options.map((option) => enableTypeCoercion(option)));
     // @ts-expect-error
     schema = options?.wrap ? options.wrap(schema) : schema;
   } else if (type.type === "object") {
