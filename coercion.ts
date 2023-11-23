@@ -1,17 +1,25 @@
+import type {
+  BaseSchema,
+  Output,
+  array,
+  bigint,
+  boolean,
+  date,
+  enum_,
+  literal,
+  number,
+  picklist,
+  string,
+} from "valibot";
 import {
-  type BaseSchema,
-  type Output,
-  coerce,
-  nonNullable,
-  nonNullableAsync,
-  nonNullish,
-  nonNullishAsync,
-  nonOptional,
-  nonOptionalAsync,
   nullable,
   nullish,
-  object,
   optional,
+  nonNullable,
+  nonNullish,
+  nonOptional,
+  object,
+  coerce,
 } from "valibot";
 
 /**
@@ -54,25 +62,40 @@ export function coerceFile(file: unknown) {
   return file;
 }
 
+type WrapSchema =
+  | typeof nullish
+  | typeof optional
+  | typeof nullable
+  | typeof nonNullable
+  | typeof nonOptional
+  | typeof nonNullish;
+
+type ValibotSchema =
+  | ReturnType<typeof object>
+  | ReturnType<typeof string>
+  | ReturnType<typeof array>
+  | ReturnType<typeof bigint>
+  | ReturnType<typeof boolean>
+  | ReturnType<typeof date>
+  | ReturnType<typeof enum_>
+  | ReturnType<typeof literal>
+  | ReturnType<typeof number>
+  | ReturnType<typeof picklist>;
+
+type AllSchema = ValibotSchema | ReturnType<WrapSchema> | BaseSchema;
+
 /**
  * Reconstruct the provided schema with additional preprocessing steps
  * This coerce empty values to undefined and transform strings to the correct type
  */
-export function enableTypeCoercion<
-  Type extends BaseSchema & {
-    type: string;
-    wrapped?: BaseSchema & { type: string };
-    async?: boolean;
-  },
->(
+export function enableTypeCoercion<Type extends AllSchema>(
   type: Type,
   options?: {
-    wrapped?: any; // TODO: fix this type
-    cache?: Map<Type, BaseSchema & { type: string }>;
+    wrap?: WrapSchema;
+    cache?: Map<Type, AllSchema>;
   },
-): BaseSchema<Output<Type>> {
-  const cache =
-    options?.cache ?? new Map<Type, BaseSchema & { type: string }>();
+): Output<Type> {
+  const cache = options?.cache ?? new Map<Type, AllSchema>();
   const result = cache.get(type);
 
   // Return the cached schema if it's already processed
@@ -81,96 +104,108 @@ export function enableTypeCoercion<
     return result;
   }
 
-  let schema: any = type;
+  // A schema that does not have a type property does not exist.
+  // However, in the wrapped property such as optional schema,
+  // it is necessary to receive the BaseSchema expression,
+  // so in order to receive it, it is also possible to receive the type in BaseSchema.
+  if (!("type" in type)) {
+    return type;
+  }
+
+  let schema: AllSchema = type;
 
   if (
     type.type === "string" ||
     type.type === "literal" ||
     type.type === "enum"
   ) {
-    schema = coerce(
-      options?.wrapped ? options.wrapped(schema) : schema,
-      (output) => coerceString(output),
+    // @ts-expect-error
+    schema = coerce(options?.wrap ? options.wrap(schema) : schema, (output) =>
+      coerceString(output),
     );
   } else if (type.type === "number") {
-    schema = coerce(
-      options?.wrapped ? options.wrapped(schema) : schema,
-      (output) => coerceString(output, Number),
+    // @ts-expect-error
+    schema = coerce(options?.wrap ? options.wrap(schema) : schema, (output) =>
+      coerceString(output, Number),
     );
   } else if (type.type === "boolean") {
-    schema = coerce(
-      options?.wrapped ? options.wrapped(schema) : schema,
-      (output) => coerceString(output, (text) => (text === "on" ? true : text)),
+    // @ts-expect-error
+    schema = coerce(options?.wrap ? options.wrap(schema) : schema, (output) =>
+      coerceString(output, (text) => (text === "on" ? true : text)),
     );
   } else if (type.type === "date") {
-    schema = coerce(
-      options?.wrapped ? options.wrapped(schema) : schema,
-      (output) => coerceString(output, (timestamp) => {
-          const date = new Date(timestamp);
+    // @ts-expect-error
+    schema = coerce(options?.wrap ? options.wrap(schema) : schema, (output) =>
+      coerceString(output, (timestamp) => {
+        const date = new Date(timestamp);
 
-          // z.date() does not expose a quick way to set invalid_date error
-          // This gets around it by returning the original string if it's invalid
-          // See https://github.com/colinhacks/zod/issues/1526
-          if (Number.isNaN(date.getTime())) {
-            return timestamp;
-          }
+        // z.date() does not expose a quick way to set invalid_date error
+        // This gets around it by returning the original string if it's invalid
+        // See https://github.com/colinhacks/zod/issues/1526
+        if (Number.isNaN(date.getTime())) {
+          return timestamp;
+        }
 
-          return date;
-        }),
+        return date;
+      }),
     );
   } else if (type.type === "bigint") {
-    schema = coerce(
-      options?.wrapped ? options.wrapped(schema) : schema,
-      (output) => coerceString(output, BigInt),
+    // @ts-expect-error
+    schema = coerce(options?.wrap ? options.wrap(schema) : schema, (output) =>
+      coerceString(output, BigInt),
     );
   } else if (type.type === "array") {
-    schema = coerce(
-      options?.wrapped ? options.wrapped(schema) : schema,
-      (output) => {
-        // No preprocess needed if the value is already an array
-        if (Array.isArray(output)) {
-          return output;
-        }
+    // @ts-expect-error
+    schema = coerce(options?.wrap ? options.wrap(schema) : schema, (output) => {
+      // No preprocess needed if the value is already an array
+      if (Array.isArray(output)) {
+        return output;
+      }
 
-        if (
-          typeof output === "undefined" ||
-          typeof coerceFile(output) === "undefined"
-        ) {
-          return [];
-        }
+      if (
+        typeof output === "undefined" ||
+        typeof coerceFile(output) === "undefined"
+      ) {
+        return [];
+      }
 
-        // Wrap it in an array otherwise
-        return [output];
-      },
-    );
+      // Wrap it in an array otherwise
+      return [output];
+    });
   } else if (type.type === "optional") {
-    schema = enableTypeCoercion(type.wrapped!, { wrapped: optional });
+    schema = enableTypeCoercion(type.wrapped, { wrap: optional });
+    // @ts-expect-error
+    schema = options?.wrap ? options.wrap(schema) : schema;
   } else if (type.type === "nullish") {
-    schema = enableTypeCoercion(type.wrapped!, { wrapped: nullish });
+    schema = enableTypeCoercion(type.wrapped, { wrap: nullish });
+    // @ts-expect-error
+    schema = options?.wrap ? options.wrap(schema) : schema;
   } else if (type.type === "nullable") {
-    schema = enableTypeCoercion(type.wrapped!, { wrapped: nullable });
-  } else if (type.type === "non_optional" && type.async) {
-    schema = enableTypeCoercion(type.wrapped!, { wrapped: nonOptionalAsync });
-  } else if (type.type === "non_nullish" && type.async) {
-    schema = enableTypeCoercion(type.wrapped!, { wrapped: nonNullishAsync });
-  } else if (type.type === "non_nullable" && type.async) {
-    schema = enableTypeCoercion(type.wrapped!, { wrapped: nonNullableAsync });
+    schema = enableTypeCoercion(type.wrapped, { wrap: nullable });
+    // @ts-expect-error
+    schema = options?.wrap ? options.wrap(schema) : schema;
   } else if (type.type === "non_optional") {
-    schema = enableTypeCoercion(type.wrapped!, { wrapped: nonOptional });
+    schema = enableTypeCoercion(type.wrapped, { wrap: nonOptional });
+    // @ts-expect-error
+    schema = options?.wrap ? options.wrap(schema) : schema;
   } else if (type.type === "non_nullish") {
-    schema = enableTypeCoercion(type.wrapped!, { wrapped: nonNullish });
+    schema = enableTypeCoercion(type.wrapped, { wrap: nonNullish });
+    // @ts-expect-error
+    schema = options?.wrap ? options.wrap(schema) : schema;
   } else if (type.type === "non_nullable") {
-    schema = enableTypeCoercion(type.wrapped!, { wrapped: nonNullable });
+    schema = enableTypeCoercion(type.wrapped, { wrap: nonNullable });
+    // @ts-expect-error
+    schema = options?.wrap ? options.wrap(schema) : schema;
   } else if (type.type === "object") {
     const shape = Object.fromEntries(
       // @ts-ignore
       Object.entries(type.entries).map(([key, def]) => [
         key,
-        // @ts-expect-error see message above
         enableTypeCoercion(def, { cache }),
       ]),
     );
-    schema = options?.wrapped ? options.wrapped(object(shape)) : object(shape);
+    // @ts-expect-error
+    schema = options?.wrap ? options.wrap(object(shape)) : object(shape);
   }
 
   if (type !== schema) {
