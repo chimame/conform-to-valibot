@@ -6,7 +6,7 @@ import { createFormData } from "./helpers/FormData";
 describe("pipe", () => {
   test("should pass also undefined", () => {
     const schema = object({ name: optional(nullable(string()), null) });
-    const output = parse(createFormData("name", ""), { schema: schema });
+    const output = parse(createFormData("name", ""), { schema });
     expect(output).toMatchObject({ error: {}, value: { name: null } });
   });
 });

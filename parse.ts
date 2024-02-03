@@ -44,7 +44,9 @@ export function parse<Schema extends BaseSchema & { type: string }>(
 
         return {
           error: result.issues.reduce<Record<string, string[]>>((result, e) => {
-            const name = e.path ? getName(e.path.map((d) => d.key)) : e.input;
+            const name = e.path
+              ? getName(e.path.map((d) => d.key as string | number))
+              : (e.input as string | number);
 
             result[name] = [...(result[name] ?? []), e.message];
 

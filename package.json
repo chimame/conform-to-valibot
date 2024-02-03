@@ -5,9 +5,7 @@
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "scripts": {
     "build": "tsup",
     "check:format": "npx @biomejs/biome format .",
@@ -36,7 +34,7 @@
   ],
   "peerDependencies": {
     "@conform-to/dom": "^0.9.1",
-    "valibot": "^0.20.1"
+    "valibot": "^0.27.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.3.3",
@@ -45,7 +43,7 @@
     "semantic-release": "^22.0.8",
     "tsup": "^8.0.0",
     "typescript": "^5.2.2",
-    "valibot": "^0.20.1",
+    "valibot": "^0.27.0",
     "vitest": "^0.34.6"
   }
 }
