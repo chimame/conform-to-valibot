@@ -218,63 +218,83 @@ export function enableTypeCoercion<
       wrap: optional,
       default: type.getDefault,
     });
-    schema = options?.wrap
-      ? "default" in options
-        ? options.wrap(schema, options.default)
-        : options.wrap(schema)
-      : schema;
+    schema = coerce(
+      options?.wrap
+        ? "default" in options
+          ? options.wrap(schema, options.default)
+          : options.wrap(schema)
+        : schema,
+      (output) => coerceString(output),
+    );
   } else if (type.type === "nullish") {
     schema = enableTypeCoercion(type.wrapped, {
       wrap: nullish,
       default: type.getDefault,
     });
-    schema = options?.wrap
-      ? "default" in options
-        ? options.wrap(schema, options.default)
-        : options.wrap(schema)
-      : schema;
+    schema = coerce(
+      options?.wrap
+        ? "default" in options
+          ? options.wrap(schema, options.default)
+          : options.wrap(schema)
+        : schema,
+      (output) => coerceString(output),
+    );
   } else if (type.type === "nullable") {
     schema = enableTypeCoercion(type.wrapped, {
       wrap: nullable,
       default: type.getDefault,
     });
-    schema = options?.wrap
-      ? "default" in options
-        ? options.wrap(schema, options.default)
-        : options.wrap(schema)
-      : schema;
+    schema = coerce(
+      options?.wrap
+        ? "default" in options
+          ? options.wrap(schema, options.default)
+          : options.wrap(schema)
+        : schema,
+      (output) => coerceString(output),
+    );
   } else if (type.type === "non_optional") {
     schema = enableTypeCoercion(type.wrapped, { wrap: nonOptional });
-    schema = options?.wrap
-      ? "default" in options
-        ? options.wrap(schema, options.default)
-        : options.wrap(schema)
-      : schema;
+    schema = coerce(
+      options?.wrap
+        ? "default" in options
+          ? options.wrap(schema, options.default)
+          : options.wrap(schema)
+        : schema,
+      (output) => coerceString(output),
+    );
   } else if (type.type === "non_nullish") {
     schema = enableTypeCoercion(type.wrapped, { wrap: nonNullish });
-    schema = options?.wrap
-      ? "default" in options
-        ? options.wrap(schema, options.default)
-        : options.wrap(schema)
-      : schema;
+    schema = coerce(
+      options?.wrap
+        ? "default" in options
+          ? options.wrap(schema, options.default)
+          : options.wrap(schema)
+        : schema,
+      (output) => coerceString(output),
+    );
   } else if (type.type === "non_nullable") {
     schema = enableTypeCoercion(type.wrapped, { wrap: nonNullable });
-    schema = options?.wrap
-      ? "default" in options
-        ? options.wrap(schema, options.default)
-        : options.wrap(schema)
-      : schema;
+    schema = coerce(
+      options?.wrap
+        ? "default" in options
+          ? options.wrap(schema, options.default)
+          : options.wrap(schema)
+        : schema,
+      (output) => coerceString(output),
+    );
   } else if (type.type === "union") {
     // @ts-expect-error
     schema = union(type.options.map((option) => enableTypeCoercion(option)));
-    schema = options?.wrap
-      ? "default" in options
-        ? options.wrap(schema, options.default)
-        : options.wrap(schema)
-      : schema;
+    schema = coerce(
+      options?.wrap
+        ? "default" in options
+          ? options.wrap(schema, options.default)
+          : options.wrap(schema)
+        : schema,
+      (output) => coerceString(output),
+    );
   } else if (type.type === "object") {
     const shape = Object.fromEntries(
-      // @ts-ignore
       Object.entries(type.entries).map(([key, def]) => [
         key,
         enableTypeCoercion(def, { cache }),
