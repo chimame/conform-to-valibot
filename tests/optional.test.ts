@@ -26,7 +26,7 @@ describe("optional", () => {
     expect(output1).toMatchObject({ error: {}, value: { name: "default" } });
 
     const schema2 = object({ name: optional(string(), () => default_) });
-    const output2 = parse(createFormData("name", ""), { schema: schema1 });
+    const output2 = parse(createFormData("name", ""), { schema: schema2 });
     expect(output2).toMatchObject({ error: {}, value: { name: "default" } });
   });
 });
