@@ -1,6 +1,17 @@
 # conform-to-valibot
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![npm version](https://badge.fury.io/js/conform-to-valibot.svg)](https://badge.fury.io/js/conform-to-valibot)
+
 > [Conform](https://github.com/edmundhung/conform) helpers for integrating with [Valibot](https://github.com/fabian-hiller/valibot)
+
+<!-- aside -->
+
+## Installation
+
+```bash
+$ npm install @conform-to/react valibot conform-to-valibot
+```
 
 <!-- aside -->
 
