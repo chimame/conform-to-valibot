@@ -1,23 +1,25 @@
 import { describe, expect, test } from "vitest";
 import { string, number, object, optional } from "valibot";
-import { parse } from "../parse";
+import { parseWithValibot } from "../parse";
 import { createFormData } from "./helpers/FormData";
 
 describe("optional", () => {
   test("should pass also undefined", () => {
     const schema = object({ age: optional(number()) });
-    const output = parse(createFormData("age", ""), { schema });
+    const output = parseWithValibot(createFormData("age", ""), { schema });
 
     expect(output).toMatchObject({
       status: "success",
       value: { age: undefined },
     });
-    expect(parse(createFormData("age", "20"), { schema })).toMatchObject({
+    expect(
+      parseWithValibot(createFormData("age", "20"), { schema }),
+    ).toMatchObject({
       status: "success",
       value: { age: 20 },
     });
     expect(
-      parse(createFormData("age", "non number"), { schema }),
+      parseWithValibot(createFormData("age", "non number"), { schema }),
     ).toMatchObject({ error: { age: ["Invalid type"] } });
   });
 
@@ -25,14 +27,18 @@ describe("optional", () => {
     const default_ = "default";
 
     const schema1 = object({ name: optional(string(), default_) });
-    const output1 = parse(createFormData("name", ""), { schema: schema1 });
+    const output1 = parseWithValibot(createFormData("name", ""), {
+      schema: schema1,
+    });
     expect(output1).toMatchObject({
       status: "success",
       value: { name: "default" },
     });
 
     const schema2 = object({ name: optional(string(), () => default_) });
-    const output2 = parse(createFormData("name", ""), { schema: schema2 });
+    const output2 = parseWithValibot(createFormData("name", ""), {
+      schema: schema2,
+    });
     expect(output2).toMatchObject({
       status: "success",
       value: { name: "default" },

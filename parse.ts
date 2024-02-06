@@ -12,19 +12,19 @@ import {
 } from "valibot";
 import { enableTypeCoercion } from "./coercion";
 
-export function parse<Schema extends BaseSchema & { type: string }>(
+export function parseWithValibot<Schema extends BaseSchema & { type: string }>(
   payload: FormData | URLSearchParams,
   config: {
     schema: Schema | ((intent: string) => Schema);
   },
 ): Submission<Output<Schema>>;
-export function parse<Schema extends BaseSchema & { type: string }>(
+export function parseWithValibot<Schema extends BaseSchema & { type: string }>(
   payload: FormData | URLSearchParams,
   config: {
     schema: Schema | ((intent: string) => Schema);
   },
 ): Promise<Submission<Output<Schema>>>;
-export function parse<Schema extends BaseSchema & { type: string }>(
+export function parseWithValibot<Schema extends BaseSchema & { type: string }>(
   payload: FormData | URLSearchParams,
   config: {
     schema: Schema | ((intent: Intent | null) => Schema);

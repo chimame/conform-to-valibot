@@ -1,12 +1,12 @@
 import { describe, expect, test } from "vitest";
 import { string, object, optional, nullable } from "valibot";
-import { parse } from "../parse";
+import { parseWithValibot } from "../parse";
 import { createFormData } from "./helpers/FormData";
 
 describe("pipe", () => {
   test("should pass also undefined", () => {
     const schema = object({ name: optional(nullable(string()), null) });
-    const output = parse(createFormData("name", ""), { schema });
+    const output = parseWithValibot(createFormData("name", ""), { schema });
     expect(output).toMatchObject({ status: "success", value: { name: null } });
   });
 });
