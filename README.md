@@ -17,17 +17,17 @@ $ npm install @conform-to/react valibot conform-to-valibot
 
 ## API Reference
 
-- [parse](#parse)
+- [parseWithValibot](#parseWithValibot)
 
 <!-- /aside -->
 
-### parse
+### parseWithValibot
 
 It parses the formData and returns a submission result with the validation error. If no error is found, the parsed data will also be populated as `submission.value`.
 
 ```tsx
 import { useForm } from '@conform-to/react';
-import { parse } from 'conform-to-valibot';
+import { parseWithValibot } from 'conform-to-valibot';
 import { object, string } from 'valibot';
 
 const schema = object({
@@ -38,7 +38,7 @@ const schema = object({
 function ExampleForm() {
   const [form, { email, password }] = useForm({
     onValidate({ formData }) {
-      return parse(formData, {
+      return parseWithValibot(formData, {
         schema,
       });
     },
@@ -52,7 +52,7 @@ Or when parsing the formData on server side (e.g. Remix):
 
 ```tsx
 import { useForm } from '@conform-to/react';
-import { parse } from 'conform-to-valibot';
+import { parseWithValibot } from 'conform-to-valibot';
 import { object } from 'valibot';
 
 const schema = object({
@@ -61,12 +61,13 @@ const schema = object({
 
 export async function action({ request }) {
   const formData = await request.formData();
-  const submission = await parse(formData, {
+  const submission = await parseWithValibot(formData, {
     schema,
   });
 
-  if (!submission.value || submission.intent !== 'submit') {
-    return submission;
+  // Send the submission back to the client if the status is not successful
+  if (submission.status !== 'success') {
+    return submission.reply();
   }
 
   // ...

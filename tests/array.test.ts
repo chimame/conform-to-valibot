@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { parse } from "../parse";
+import { parseWithValibot } from "../parse";
 import { object, array, string } from "valibot";
 import { createFormData } from "./helpers/FormData";
 
@@ -9,7 +9,7 @@ describe("array", () => {
     const formData = createFormData("select", "1");
     formData.append("select", "2");
     formData.append("select", "3");
-    const output = parse(formData, { schema });
+    const output = parseWithValibot(formData, { schema });
 
     expect(output).toMatchObject({
       status: "success",
