@@ -17,7 +17,7 @@ describe("nonOptional", () => {
     });
     const input1 = createFormData("item", "1");
     const output1 = parse(input1, { schema: schema1 });
-    expect(output1).toMatchObject({ error: {}, value: { item: 1 } });
+    expect(output1).toMatchObject({ status: "success", value: { item: 1 } });
     expect(
       parse(createFormData("item", "non Number"), { schema: schema1 }),
     ).toMatchObject({ error: { item: ["Invalid type"] } });
@@ -29,7 +29,7 @@ describe("nonOptional", () => {
       item: nonNullish(union([number(), undefined_()])),
     });
     const output2 = parse(input1, { schema: schema2 });
-    expect(output2).toMatchObject({ error: {}, value: { item: 1 } });
+    expect(output2).toMatchObject({ status: "success", value: { item: 1 } });
     expect(
       parse(createFormData("item", "non Number"), { schema: schema2 }),
     ).toMatchObject({ error: { item: ["Invalid type"] } });

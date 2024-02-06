@@ -8,7 +8,7 @@ describe("date", () => {
     const schema = object({ birthday: date() });
     const output = parse(createFormData("birthday", "2023-11-19"), { schema });
     expect(output).toMatchObject({
-      error: {},
+      status: "success",
       value: { birthday: new Date("2023-11-19") },
     });
 

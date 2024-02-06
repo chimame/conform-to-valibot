@@ -10,14 +10,14 @@ describe("picklist", () => {
     const formData1 = createFormData("list", "value_1");
     const output1 = parse(formData1, { schema });
     expect(output1).toMatchObject({
-      error: {},
+      status: "success",
       value: { list: "value_1" },
     });
 
     const formData2 = createFormData("list", "value_2");
     const output2 = parse(formData2, { schema });
     expect(output2).toMatchObject({
-      error: {},
+      status: "success",
       value: { list: "value_2" },
     });
 
