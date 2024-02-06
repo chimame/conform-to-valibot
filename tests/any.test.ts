@@ -8,10 +8,16 @@ describe("any", () => {
     const schema = object({ item: any() });
     const input1 = createFormData("item", "hello");
     const output1 = parse(input1, { schema });
-    expect(output1).toMatchObject({ error: {}, value: { item: "hello" } });
+    expect(output1).toMatchObject({
+      status: "success",
+      value: { item: "hello" },
+    });
     const input2 = createFormData("item", "1");
     input2.append("item", "2");
     const output2 = parse(input2, { schema });
-    expect(output2).toMatchObject({ error: {}, value: { item: ["1", "2"] } });
+    expect(output2).toMatchObject({
+      status: "success",
+      value: { item: ["1", "2"] },
+    });
   });
 });

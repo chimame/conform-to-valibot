@@ -8,7 +8,10 @@ describe("boolean", () => {
     const schema = object({ check: boolean() });
     const input1 = createFormData("check", "on");
     const output1 = parse(input1, { schema });
-    expect(output1).toMatchObject({ error: {}, value: { check: true } });
+    expect(output1).toMatchObject({
+      status: "success",
+      value: { check: true },
+    });
     expect(parse(createFormData("check", ""), { schema })).toMatchObject({
       error: { check: ["Invalid type"] },
     });

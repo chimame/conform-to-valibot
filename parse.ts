@@ -1,4 +1,9 @@
-import { type Submission, getName, parse as baseParse } from "@conform-to/dom";
+import {
+  type Intent,
+  type Submission,
+  formatPaths,
+  parse as baseParse,
+} from "@conform-to/dom";
 import {
   type BaseSchema,
   type Output,
@@ -22,10 +27,10 @@ export function parse<Schema extends BaseSchema & { type: string }>(
 export function parse<Schema extends BaseSchema & { type: string }>(
   payload: FormData | URLSearchParams,
   config: {
-    schema: Schema | ((intent: string) => Schema);
+    schema: Schema | ((intent: Intent | null) => Schema);
   },
 ): Submission<Output<Schema>> | Promise<Submission<Output<Schema>>> {
-  return baseParse<Output<Schema>>(payload, {
+  return baseParse<Output<Schema>, string[]>(payload, {
     resolve(payload, intent) {
       const schema = enableTypeCoercion(
         typeof config.schema === "function"
@@ -45,7 +50,7 @@ export function parse<Schema extends BaseSchema & { type: string }>(
         return {
           error: result.issues.reduce<Record<string, string[]>>((result, e) => {
             const name = e.path
-              ? getName(e.path.map((d) => d.key as string | number))
+              ? formatPaths(e.path.map((d) => d.key as string | number))
               : (e.input as string | number);
 
             result[name] = [...(result[name] ?? []), e.message];

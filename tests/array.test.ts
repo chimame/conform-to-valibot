@@ -12,7 +12,7 @@ describe("array", () => {
     const output = parse(formData, { schema });
 
     expect(output).toMatchObject({
-      error: {},
+      status: "success",
       value: { select: ["1", "2", "3"] },
     });
   });

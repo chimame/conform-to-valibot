@@ -15,14 +15,14 @@ describe("enum_", () => {
     const formData1 = createFormData("item", Direction.Left);
     const output1 = parse(formData1, { schema });
     expect(output1).toMatchObject({
-      error: {},
+      status: "success",
       value: { item: Direction.Left },
     });
 
     const formData2 = createFormData("item", Direction.Right);
     const output2 = parse(formData2, { schema });
     expect(output2).toMatchObject({
-      error: {},
+      status: "success",
       value: { item: Direction.Right },
     });
 

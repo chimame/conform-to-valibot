@@ -7,6 +7,6 @@ describe("pipe", () => {
   test("should pass also undefined", () => {
     const schema = object({ name: optional(nullable(string()), null) });
     const output = parse(createFormData("name", ""), { schema });
-    expect(output).toMatchObject({ error: {}, value: { name: null } });
+    expect(output).toMatchObject({ status: "success", value: { name: null } });
   });
 });

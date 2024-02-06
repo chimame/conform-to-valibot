@@ -8,9 +8,12 @@ describe("optional", () => {
     const schema = object({ age: optional(number()) });
     const output = parse(createFormData("age", ""), { schema });
 
-    expect(output).toMatchObject({ error: {}, value: { age: undefined } });
+    expect(output).toMatchObject({
+      status: "success",
+      value: { age: undefined },
+    });
     expect(parse(createFormData("age", "20"), { schema })).toMatchObject({
-      error: {},
+      status: "success",
       value: { age: 20 },
     });
     expect(
@@ -23,10 +26,16 @@ describe("optional", () => {
 
     const schema1 = object({ name: optional(string(), default_) });
     const output1 = parse(createFormData("name", ""), { schema: schema1 });
-    expect(output1).toMatchObject({ error: {}, value: { name: "default" } });
+    expect(output1).toMatchObject({
+      status: "success",
+      value: { name: "default" },
+    });
 
     const schema2 = object({ name: optional(string(), () => default_) });
     const output2 = parse(createFormData("name", ""), { schema: schema2 });
-    expect(output2).toMatchObject({ error: {}, value: { name: "default" } });
+    expect(output2).toMatchObject({
+      status: "success",
+      value: { name: "default" },
+    });
   });
 });

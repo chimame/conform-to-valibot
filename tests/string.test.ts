@@ -9,7 +9,10 @@ describe("string", () => {
 
     const output = parse(createFormData("name", "Jane"), { schema });
 
-    expect(output).toMatchObject({ error: {}, value: { name: "Jane" } });
+    expect(output).toMatchObject({
+      status: "success",
+      value: { name: "Jane" },
+    });
     expect(parse(createFormData("name", ""), { schema })).toMatchObject({
       error: { name: ["Invalid type"] },
     });

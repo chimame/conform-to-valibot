@@ -8,13 +8,13 @@ describe("undefined", () => {
     const schema = object({ name: string(), age: undefined_() });
     const formData1 = createFormData("name", "Jane");
     expect(parse(formData1, { schema })).toMatchObject({
-      error: {},
+      status: "success",
       value: { name: "Jane" },
     });
 
     formData1.append("age", "");
     expect(parse(formData1, { schema })).toMatchObject({
-      error: {},
+      status: "success",
       value: { name: "Jane", age: undefined },
     });
 
