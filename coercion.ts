@@ -1,30 +1,5 @@
-import type {
-  NullSchema,
-  NullableSchema,
-  OptionalSchema,
-  NullishSchema,
-  NonNullableSchema,
-  NonOptionalSchema,
-  NonNullishSchema,
-  ObjectSchema,
-  ObjectEntries,
-  UnionSchema,
-  UnionOptions,
-  BaseSchema,
-  ArraySchema,
-  BigintSchema,
-  BooleanSchema,
-  DateSchema,
-  EnumSchema,
-  Enum,
-  LiteralSchema,
-  Literal,
-  NumberSchema,
-  PicklistSchema,
-  PicklistOptions,
-  StringSchema,
-  UndefinedSchema,
-} from "valibot";
+import type { WrapSchema, AllSchema, ObjectSchema } from "./types/schema";
+
 import { coerce } from "valibot";
 
 /**
@@ -66,37 +41,6 @@ export function coerceFile(file: unknown) {
 
   return file;
 }
-
-type WrapWithDefaultSchema =
-  | NullSchema<BaseSchema>
-  | OptionalSchema<BaseSchema>
-  | NullableSchema<BaseSchema>
-  | NullishSchema<BaseSchema>;
-type WrapWithoutDefaultSchema =
-  | NonNullableSchema<BaseSchema>
-  | NonOptionalSchema<BaseSchema>
-  | NonNullableSchema<BaseSchema>
-  | NonNullishSchema<BaseSchema>;
-type WrapSchema = WrapWithDefaultSchema | WrapWithoutDefaultSchema;
-
-type ValibotSchema =
-  | ObjectSchema<ObjectEntries>
-  | StringSchema
-  | ArraySchema<BaseSchema>
-  | BigintSchema
-  | BooleanSchema
-  | DateSchema
-  | EnumSchema<Enum>
-  | LiteralSchema<Literal>
-  | NumberSchema
-  | PicklistSchema<PicklistOptions>
-  | UndefinedSchema;
-
-type AllSchema =
-  | ValibotSchema
-  | WrapSchema
-  | UnionSchema<UnionOptions>
-  | BaseSchema;
 
 type WrapOption = {
   wrap?: WrapSchema;
@@ -316,7 +260,7 @@ export function enableTypeCoercion<Type extends AllSchema,>(
           enableTypeCoercion(def, { cache }),
         ]),
       ),
-    } as ObjectSchema<ObjectEntries>;
+    } as ObjectSchema;
     schema = options?.wrap
       ? {
           ...options.wrap,
