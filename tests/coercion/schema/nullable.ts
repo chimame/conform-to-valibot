@@ -1,11 +1,11 @@
 import { describe, expect, test } from "vitest";
-import { string, number, object, optional } from "valibot";
-import { parseWithValibot } from "../parse";
-import { createFormData } from "./helpers/FormData";
+import { string, number, object, nullable } from "valibot";
+import { parseWithValibot } from "../../../parse";
+import { createFormData } from "../../helpers/FormData";
 
-describe("optional", () => {
+describe("nullable", () => {
   test("should pass also undefined", () => {
-    const schema = object({ age: optional(number()) });
+    const schema = object({ age: nullable(number()) });
     const output = parseWithValibot(createFormData("age", ""), { schema });
 
     expect(output).toMatchObject({
@@ -26,7 +26,7 @@ describe("optional", () => {
   test("should use default if required", () => {
     const default_ = "default";
 
-    const schema1 = object({ name: optional(string(), default_) });
+    const schema1 = object({ name: nullable(string(), default_) });
     const output1 = parseWithValibot(createFormData("name", ""), {
       schema: schema1,
     });
@@ -35,9 +35,9 @@ describe("optional", () => {
       value: { name: "default" },
     });
 
-    const schema2 = object({ name: optional(string(), () => default_) });
+    const schema2 = object({ name: nullable(string(), () => default_) });
     const output2 = parseWithValibot(createFormData("name", ""), {
-      schema: schema2,
+      schema: schema1,
     });
     expect(output2).toMatchObject({
       status: "success",

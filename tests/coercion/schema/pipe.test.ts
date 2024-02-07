@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { string, object, optional, nullable } from "valibot";
-import { parseWithValibot } from "../parse";
-import { createFormData } from "./helpers/FormData";
+import { parseWithValibot } from "../../../parse";
+import { createFormData } from "../../helpers/FormData";
 
 describe("pipe", () => {
   test("should pass also undefined", () => {
