@@ -1,7 +1,7 @@
 import { number, object } from "valibot";
 import { describe, expect, test } from "vitest";
-import { parseWithValibot } from "../parse";
-import { createFormData } from "./helpers/FormData";
+import { parseWithValibot } from "../../../parse";
+import { createFormData } from "../../helpers/FormData";
 
 describe("number", () => {
   test("should pass only numbers", () => {

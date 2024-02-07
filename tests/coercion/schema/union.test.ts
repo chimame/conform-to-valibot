@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
-import { parseWithValibot } from "../parse";
+import { parseWithValibot } from "../../../parse";
 import { object, union, number, undefined_ } from "valibot";
-import { createFormData } from "./helpers/FormData";
+import { createFormData } from "../../helpers/FormData";
 
 describe("union", () => {
   test("should pass only union values", () => {

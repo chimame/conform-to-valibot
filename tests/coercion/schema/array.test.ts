@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
-import { parseWithValibot } from "../parse";
+import { parseWithValibot } from "../../../parse";
 import { object, array, string } from "valibot";
-import { createFormData } from "./helpers/FormData";
+import { createFormData } from "../../helpers/FormData";
 
 describe("array", () => {
   test("should pass only arrays", () => {

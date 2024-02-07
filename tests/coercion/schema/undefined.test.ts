@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
-import { parseWithValibot } from "../parse";
+import { parseWithValibot } from "../../../parse";
 import { object, undefined_, string } from "valibot";
-import { createFormData } from "./helpers/FormData";
+import { createFormData } from "../../helpers/FormData";
 
 describe("undefined", () => {
   test("should pass only undefined", () => {

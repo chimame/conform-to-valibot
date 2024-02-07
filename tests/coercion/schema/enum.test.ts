@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
-import { parseWithValibot } from "../parse";
+import { parseWithValibot } from "../../../parse";
 import { object, enum_ } from "valibot";
-import { createFormData } from "./helpers/FormData";
+import { createFormData } from "../../helpers/FormData";
 
 enum Direction {
   Left = "left",
