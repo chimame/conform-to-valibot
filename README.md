@@ -18,6 +18,7 @@ $ npm install @conform-to/react valibot conform-to-valibot
 ## API Reference
 
 - [parseWithValibot](#parseWithValibot)
+- [getValibotConstraint](#getValibotConstraint)
 
 <!-- /aside -->
 
@@ -69,6 +70,29 @@ export async function action({ request }) {
   if (submission.status !== 'success') {
     return submission.reply();
   }
+
+  // ...
+}
+```
+
+### getValibotConstraint
+
+A helper that returns an object containing the validation attributes for each field by introspecting the valibot schema.
+
+```tsx
+import { getValibotConstraint } from "conform-to-valibot";
+import { useForm } from "@conform-to/react";
+import { object, string, minLength, maxLength, optional } from "valibot";
+
+const schema = object({
+  title: string([minLength(10), maxLength(100)]),
+  description: optional(string([minLength(100), maxLength(1000)])),
+});
+
+function Example() {
+  const [form, fields] = useForm({
+    constraint: getValibotConstraint(schema),
+  });
 
   // ...
 }
