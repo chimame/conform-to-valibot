@@ -1,6 +1,6 @@
 import type { WrapSchema, AllSchema, ObjectSchema } from "./types/schema";
 
-import { coerce } from "valibot";
+import { type VariantOptions, coerce } from "valibot";
 
 /**
  * Helpers for coercing string value
@@ -241,6 +241,22 @@ export function enableTypeCoercion<Type extends AllSchema,>(
     schema = {
       ...type,
       options: type.options.map((option) => enableTypeCoercion(option)),
+    };
+    schema = coerce(
+      options?.wrap
+        ? {
+            ...options.wrap,
+            wrapped: schema,
+          }
+        : schema,
+      (output) => coerceString(output),
+    );
+  } else if (type.type === "variant") {
+    schema = {
+      ...type,
+      options: type.options.map((option) =>
+        enableTypeCoercion(option),
+      ) as VariantOptions<string>,
     };
     schema = coerce(
       options?.wrap
