@@ -1,6 +1,11 @@
 import type { WrapSchema, AllSchema, ObjectSchema } from "./types/schema";
 
-import { type VariantOptions, coerce } from "valibot";
+import {
+  type VariantOptions,
+  type TupleItems,
+  type BaseSchema,
+  coerce,
+} from "valibot";
 
 /**
  * Helpers for coercing string value
@@ -257,6 +262,12 @@ export function enableTypeCoercion<Type extends AllSchema,>(
       options: type.options.map((option) =>
         enableTypeCoercion(option),
       ) as VariantOptions<string>,
+    };
+  } else if (type.type === "tuple") {
+    schema = {
+      ...type,
+      items: type.items.map((item) => enableTypeCoercion(item)) as TupleItems,
+      rest: type.rest ? enableTypeCoercion(type.rest) : undefined,
     };
     schema = coerce(
       options?.wrap
