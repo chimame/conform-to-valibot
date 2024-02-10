@@ -65,6 +65,6 @@ export type OptionsSchema =
   | UnionSchema<UnionOptions>
   | VariantSchema<string, VariantOptions<string>>
   | IntersectSchema<IntersectOptions>
-  | TupleSchema<TupleItems>;
+  | TupleSchema<TupleItems, BaseSchema | undefined>;
 
 export type AllSchema = ValibotSchema | WrapSchema | OptionsSchema | BaseSchema;
