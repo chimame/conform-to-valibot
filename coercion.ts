@@ -3,7 +3,7 @@ import type { WrapSchema, AllSchema, ObjectSchema } from "./types/schema";
 import {
   type VariantOptions,
   type TupleItems,
-  type BaseSchema,
+  type IntersectOptions,
   coerce,
 } from "valibot";
 
@@ -268,6 +268,22 @@ export function enableTypeCoercion<Type extends AllSchema,>(
       ...type,
       items: type.items.map((item) => enableTypeCoercion(item)) as TupleItems,
       rest: type.rest ? enableTypeCoercion(type.rest) : undefined,
+    };
+    schema = coerce(
+      options?.wrap
+        ? {
+            ...options.wrap,
+            wrapped: schema,
+          }
+        : schema,
+      (output) => coerceString(output),
+    );
+  } else if (type.type === "intersect") {
+    schema = {
+      ...type,
+      options: type.options.map((item) =>
+        enableTypeCoercion(item),
+      ) as IntersectOptions,
     };
     schema = coerce(
       options?.wrap

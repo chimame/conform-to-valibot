@@ -7,6 +7,7 @@ import {
 import {
   type BaseSchema,
   type Output,
+  type ParseInfo,
   SafeParseResult,
   safeParse,
 } from "valibot";
@@ -16,18 +17,21 @@ export function parseWithValibot<Schema extends BaseSchema & { type: string }>(
   payload: FormData | URLSearchParams,
   config: {
     schema: Schema | ((intent: string) => Schema);
+    info?: Pick<ParseInfo, "abortEarly" | "abortPipeEarly" | "skipPipe">;
   },
 ): Submission<Output<Schema>>;
 export function parseWithValibot<Schema extends BaseSchema & { type: string }>(
   payload: FormData | URLSearchParams,
   config: {
     schema: Schema | ((intent: string) => Schema);
+    info?: Pick<ParseInfo, "abortEarly" | "abortPipeEarly" | "skipPipe">;
   },
 ): Promise<Submission<Output<Schema>>>;
 export function parseWithValibot<Schema extends BaseSchema & { type: string }>(
   payload: FormData | URLSearchParams,
   config: {
     schema: Schema | ((intent: Intent | null) => Schema);
+    info?: Pick<ParseInfo, "abortEarly" | "abortPipeEarly" | "skipPipe">;
   },
 ): Submission<Output<Schema>> | Promise<Submission<Output<Schema>>> {
   return baseParse<Output<Schema>, string[]>(payload, {
@@ -60,7 +64,7 @@ export function parseWithValibot<Schema extends BaseSchema & { type: string }>(
         };
       };
 
-      return resolveResult(safeParse(schema, payload));
+      return resolveResult(safeParse(schema, payload, config.info));
     },
   });
 }
