@@ -146,6 +146,10 @@ export function enableTypeCoercion<Type extends AllSchema,>(
       (output) => coerceString(output, BigInt),
     );
   } else if (type.type === "array") {
+    schema = {
+      ...type,
+      item: enableTypeCoercion(type.item),
+    };
     schema = coerce(
       options?.wrap
         ? {

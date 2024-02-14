@@ -15,5 +15,19 @@ describe("array", () => {
       status: "success",
       value: { select: ["1", "2", "3"] },
     });
+
+    const schema2 = object({ nest: array(object({ name: string() })) });
+    const formData2 = createFormData("nest[].name", "test name");
+    const output2 = parseWithValibot(formData2, { schema: schema2 });
+    expect(output2).toMatchObject({
+      status: "success",
+      value: { nest: [{ name: "test name" }] },
+    });
+
+    const errorFormData = createFormData("nest[].name", "");
+    const errorOutput = parseWithValibot(errorFormData, { schema: schema2 });
+    expect(errorOutput).toMatchObject({
+      error: { "nest[0].name": ["Invalid type"] },
+    });
   });
 });
