@@ -27,7 +27,11 @@ export function coerceString(
     return value;
   }
 
-  return transform(value);
+  try {
+    return transform(value);
+  } catch {
+    return undefined;
+  }
 }
 
 /**
