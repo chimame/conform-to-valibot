@@ -22,12 +22,12 @@ describe("nonOptional", () => {
       parseWithValibot(createFormData("item", "non Number"), {
         schema: schema1,
       }),
-    ).toMatchObject({ error: { item: ["Invalid type"] } });
+    ).toMatchObject({ error: { item: ["Invalid type: Expected number but received NaN"] } });
     expect(
       parseWithValibot(createFormData("item2", "non Param"), {
         schema: schema1,
       }),
-    ).toMatchObject({ error: { item: ["Invalid type"] } });
+    ).toMatchObject({ error: { item: ["Invalid type: Expected !null & !undefined but received undefined"] } });
 
     const schema2 = object({
       item: nonNullish(union([number(), undefined_()])),
@@ -38,11 +38,11 @@ describe("nonOptional", () => {
       parseWithValibot(createFormData("item", "non Number"), {
         schema: schema2,
       }),
-    ).toMatchObject({ error: { item: ["Invalid type"] } });
+    ).toMatchObject({ error: { item: ["Invalid type: Expected number | undefined but received \"non Number\""] } });
     expect(
       parseWithValibot(createFormData("item2", "non Param"), {
         schema: schema2,
       }),
-    ).toMatchObject({ error: { item: ["Invalid type"] } });
+    ).toMatchObject({ error: { item: ["Invalid type: Expected !null & !undefined but received undefined"] } });
   });
 });

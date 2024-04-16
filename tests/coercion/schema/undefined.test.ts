@@ -21,7 +21,7 @@ describe("undefined", () => {
     const formData2 = createFormData("name", "Jane");
     formData2.append("age", "20");
     expect(parseWithValibot(formData2, { schema })).toMatchObject({
-      error: { age: ["Invalid type"] },
+      error: { age: ["Invalid type: Expected undefined but received \"20\""] },
     });
   });
 });

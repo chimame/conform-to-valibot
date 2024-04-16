@@ -1,5 +1,5 @@
 import type { Constraint } from "@conform-to/dom";
-import type { WrapSchema, AllSchema, ObjectSchema } from "./types/schema";
+import type { AllSchema } from "./types/schema";
 
 const keys: Array<keyof Constraint> = [
   "required",

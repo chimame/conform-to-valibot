@@ -12,10 +12,10 @@ describe("number", () => {
     expect(
       parseWithValibot(createFormData("age", ""), { schema }),
     ).toMatchObject({
-      error: { age: ["Invalid type"] },
+      error: { age: ["Invalid type: Expected number but received undefined"] },
     });
     expect(
       parseWithValibot(createFormData("age", "non number"), { schema }),
-    ).toMatchObject({ error: { age: ["Invalid type"] } });
+    ).toMatchObject({ error: { age: ["Invalid type: Expected number but received NaN"] } });
   });
 });

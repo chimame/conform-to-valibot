@@ -20,7 +20,7 @@ describe("nullish", () => {
     });
     expect(
       parseWithValibot(createFormData("age", "non number"), { schema }),
-    ).toMatchObject({ error: { age: ["Invalid type"] } });
+    ).toMatchObject({ error: { age: ["Invalid type: Expected number but received NaN"] } });
   });
 
   test("should use default if required", () => {

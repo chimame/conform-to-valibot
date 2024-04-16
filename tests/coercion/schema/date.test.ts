@@ -16,6 +16,6 @@ describe("date", () => {
 
     expect(
       parseWithValibot(createFormData("birthday", "non date"), { schema }),
-    ).toMatchObject({ error: { birthday: ["Invalid type"] } });
+    ).toMatchObject({ error: { birthday: ["Invalid type: Expected Date but received \"non date\""] } });
   });
 });

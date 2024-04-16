@@ -29,7 +29,7 @@ describe("enum_", () => {
     const formData3 = createFormData("item", "value_3");
     const output3 = parseWithValibot(formData3, { schema });
     expect(output3).toMatchObject({
-      error: { item: ["Invalid type"] },
+      error: { item: ["Invalid type: Expected \"left\" | \"right\" but received \"value_3\""] },
     });
   });
 });
