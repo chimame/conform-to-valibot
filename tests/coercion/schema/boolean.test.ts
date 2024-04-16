@@ -15,7 +15,9 @@ describe("boolean", () => {
     expect(
       parseWithValibot(createFormData("check", ""), { schema }),
     ).toMatchObject({
-      error: { check: ["Invalid type"] },
+      error: {
+        check: ["Invalid type: Expected boolean but received undefined"],
+      },
     });
   });
 });

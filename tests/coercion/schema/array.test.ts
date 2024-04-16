@@ -27,7 +27,11 @@ describe("array", () => {
     const errorFormData = createFormData("nest[].name", "");
     const errorOutput = parseWithValibot(errorFormData, { schema: schema2 });
     expect(errorOutput).toMatchObject({
-      error: { "nest[0].name": ["Invalid type"] },
+      error: {
+        "nest[0].name": [
+          "Invalid type: Expected string but received undefined",
+        ],
+      },
     });
   });
 });

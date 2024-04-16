@@ -18,7 +18,11 @@ describe("union", () => {
     expect(
       parseWithValibot(createFormData("age", "non number"), { schema }),
     ).toMatchObject({
-      error: { age: ["Invalid type"] },
+      error: {
+        age: [
+          'Invalid type: Expected number | undefined but received "non number"',
+        ],
+      },
     });
   });
 });

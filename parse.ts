@@ -7,7 +7,7 @@ import {
 import {
   type BaseSchema,
   type Output,
-  type ParseInfo,
+  type SchemaConfig,
   SafeParseResult,
   safeParse,
 } from "valibot";
@@ -17,21 +17,30 @@ export function parseWithValibot<Schema extends BaseSchema & { type: string }>(
   payload: FormData | URLSearchParams,
   config: {
     schema: Schema | ((intent: string) => Schema);
-    info?: Pick<ParseInfo, "abortEarly" | "abortPipeEarly" | "skipPipe">;
+    info?: Pick<
+      SchemaConfig,
+      "abortEarly" | "abortPipeEarly" | "skipPipe" | "lang"
+    >;
   },
 ): Submission<Output<Schema>>;
 export function parseWithValibot<Schema extends BaseSchema & { type: string }>(
   payload: FormData | URLSearchParams,
   config: {
     schema: Schema | ((intent: string) => Schema);
-    info?: Pick<ParseInfo, "abortEarly" | "abortPipeEarly" | "skipPipe">;
+    info?: Pick<
+      SchemaConfig,
+      "abortEarly" | "abortPipeEarly" | "skipPipe" | "lang"
+    >;
   },
 ): Promise<Submission<Output<Schema>>>;
 export function parseWithValibot<Schema extends BaseSchema & { type: string }>(
   payload: FormData | URLSearchParams,
   config: {
     schema: Schema | ((intent: Intent | null) => Schema);
-    info?: Pick<ParseInfo, "abortEarly" | "abortPipeEarly" | "skipPipe">;
+    info?: Pick<
+      SchemaConfig,
+      "abortEarly" | "abortPipeEarly" | "skipPipe" | "lang"
+    >;
   },
 ): Submission<Output<Schema>> | Promise<Submission<Output<Schema>>> {
   return baseParse<Output<Schema>, string[]>(payload, {

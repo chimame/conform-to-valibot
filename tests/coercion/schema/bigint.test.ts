@@ -12,10 +12,12 @@ describe("bigint", () => {
     expect(
       parseWithValibot(createFormData("id", ""), { schema }),
     ).toMatchObject({
-      error: { id: ["Invalid type"] },
+      error: { id: ["Invalid type: Expected bigint but received undefined"] },
     });
     expect(
       parseWithValibot(createFormData("id", "non bigint"), { schema }),
-    ).toMatchObject({ error: { id: ["Invalid type"] } });
+    ).toMatchObject({
+      error: { id: ["Invalid type: Expected bigint but received undefined"] },
+    });
   });
 });
