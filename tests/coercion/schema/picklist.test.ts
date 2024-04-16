@@ -24,7 +24,11 @@ describe("picklist", () => {
     const formData3 = createFormData("list", "value_3");
     const output3 = parseWithValibot(formData3, { schema });
     expect(output3).toMatchObject({
-      error: { list: ["Invalid type: Expected \"value_1\" | \"value_2\" but received \"value_3\""] },
+      error: {
+        list: [
+          'Invalid type: Expected "value_1" | "value_2" but received "value_3"',
+        ],
+      },
     });
   });
 });

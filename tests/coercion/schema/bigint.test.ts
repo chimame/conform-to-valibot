@@ -16,6 +16,8 @@ describe("bigint", () => {
     });
     expect(
       parseWithValibot(createFormData("id", "non bigint"), { schema }),
-    ).toMatchObject({ error: { id: ["Invalid type: Expected bigint but received undefined"] } });
+    ).toMatchObject({
+      error: { id: ["Invalid type: Expected bigint but received undefined"] },
+    });
   });
 });

@@ -18,12 +18,19 @@ describe("intersect", () => {
     const errorInput1 = createFormData("intersect", "foo");
     const errorOutput1 = parseWithValibot(errorInput1, { schema: schema1 });
     expect(errorOutput1).toMatchObject({
-      error: { intersect: ["Invalid type: Expected \"test\" but received \"foo\""] },
+      error: {
+        intersect: ['Invalid type: Expected "test" but received "foo"'],
+      },
     });
     const errorInput2 = createFormData("intersect", "");
     const errorOutput2 = parseWithValibot(errorInput2, { schema: schema1 });
     expect(errorOutput2).toMatchObject({
-      error: { intersect: ["Invalid type: Expected string but received undefined", "Invalid type: Expected \"test\" but received undefined"] },
+      error: {
+        intersect: [
+          "Invalid type: Expected string but received undefined",
+          'Invalid type: Expected "test" but received undefined',
+        ],
+      },
     });
 
     const schema2 = intersect([
@@ -57,7 +64,9 @@ describe("intersect", () => {
     const info = { abortEarly: true };
     const errorOutput = parseWithValibot(errorInput, { schema, info });
     expect(errorOutput).toMatchObject({
-      error: { intersect: ["Invalid type: Expected string but received undefined"] },
+      error: {
+        intersect: ["Invalid type: Expected string but received undefined"],
+      },
     });
   });
 });
