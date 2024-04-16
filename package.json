@@ -12,7 +12,8 @@
     "format": "npx @biomejs/biome format --write .",
     "prepack": "npm run build",
     "release": "semantic-release",
-    "test": "vitest"
+    "test": "vitest",
+    "typecheck": "tsc"
   },
   "author": "chimame",
   "license": "MIT",
