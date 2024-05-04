@@ -10,7 +10,7 @@
 ## Installation
 
 ```bash
-$ npm install @conform-to/react valibot conform-to-valibot
+npm install @conform-to/react valibot conform-to-valibot
 ```
 
 <!-- aside -->
