@@ -1,6 +1,6 @@
 import { describe, test, expect } from "vitest";
 import {
-  custom,
+  check,
   maxLength,
   minLength,
   object,
@@ -19,6 +19,7 @@ import {
   literal,
   tuple,
   variant,
+  pipe,
 } from "valibot";
 import { getValibotConstraint } from "../constraint";
 
@@ -30,48 +31,60 @@ enum TestEnum {
 
 describe("constraint", () => {
   test("getValibotConstraint", () => {
-    const schema = object(
-      {
-        text: string("required", [
+    const schema = pipe(
+      object({
+        text: pipe(
+          string("required"),
           minLength(10, "min"),
           maxLength(100, "max"),
-          custom(() => false, "refine"),
-        ]),
-        number: number("required", [
+          check(() => false, "refine"),
+        ),
+        number: pipe(
+          number("required"),
           minValue(1, "min"),
           maxValue(10, "max"),
-          custom((v) => v % 2 === 0, "step"),
-        ]),
+          check((v) => v % 2 === 0, "step"),
+        ),
         timestamp: optional(
-          date([minValue(new Date(1), "min"), maxValue(new Date(), "max")]),
+          pipe(
+            date(),
+            minValue(new Date(1), "min"),
+            maxValue(new Date(), "max"),
+          ),
           new Date(),
         ),
         flag: optional(boolean()),
-        options: array(enum_(TestEnum), [minLength(3, "min")]),
-        nested: object(
-          {
-            key: string([custom(() => false, "refine")]),
-          },
-          [custom(() => false, "refine")],
+        options: pipe(array(enum_(TestEnum)), minLength(3, "min")),
+        nested: pipe(
+          object({
+            key: pipe(
+              string(),
+              check(() => false, "refine"),
+            ),
+          }),
+          check(() => false, "refine"),
         ),
-        list: array(
-          object(
-            {
-              key: string("required", [custom(() => false, "refine")]),
-            },
-            [custom(() => false, "refine")],
+        list: pipe(
+          array(
+            object({
+              key: pipe(
+                string("required"),
+                check(() => false, "refine"),
+              ),
+            }),
           ),
-          [maxLength(0, "max")],
+          maxLength(0, "max"),
         ),
-        files: array(instance(Date, "Invalid file"), [
+        files: pipe(
+          array(instance(Date, "Invalid file")),
           minLength(1, "required"),
-        ]),
+        ),
         tuple: tuple([
-          string([minLength(3, "min")]),
-          optional(number([maxValue(100, "max")])),
+          pipe(string(), minLength(3, "min")),
+          optional(pipe(number(), maxValue(100, "max"))),
         ]),
-      },
-      [custom(() => false, "refine")],
+      }),
+      check(() => false, "refine"),
     );
     const constraint = {
       text: {
@@ -161,17 +174,17 @@ describe("constraint", () => {
           union([
             object({
               type: literal("a"),
-              foo: string([minLength(1, "min")]),
-              baz: string([minLength(1, "min")]),
+              foo: pipe(string(), minLength(1, "min")),
+              baz: pipe(string(), minLength(1, "min")),
             }),
             object({
               type: literal("b"),
-              bar: string([minLength(1, "min")]),
-              baz: string([minLength(1, "min")]),
+              bar: pipe(string(), minLength(1, "min")),
+              baz: pipe(string(), minLength(1, "min")),
             }),
           ]),
           object({
-            qux: string([minLength(1, "min")]),
+            qux: pipe(string(), minLength(1, "min")),
           }),
         ]),
       ),
@@ -190,17 +203,17 @@ describe("constraint", () => {
           variant("type", [
             object({
               type: literal("a"),
-              foo: string([minLength(1, "min")]),
-              baz: string([minLength(1, "min")]),
+              foo: pipe(string(), minLength(1, "min")),
+              baz: pipe(string(), minLength(1, "min")),
             }),
             object({
               type: literal("b"),
-              bar: string([minLength(1, "min")]),
-              baz: string([minLength(1, "min")]),
+              bar: pipe(string(), minLength(1, "min")),
+              baz: pipe(string(), minLength(1, "min")),
             }),
           ]),
           object({
-            qux: string([minLength(1, "min")]),
+            qux: pipe(string(), minLength(1, "min")),
           }),
         ]),
       ),
