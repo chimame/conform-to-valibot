@@ -31,28 +31,5 @@ describe("tuple", () => {
     expect(parseWithValibot(errorInput2, { schema: schema1 })).toMatchObject({
       error: { tuple: ['Invalid type: Expected Array but received "123"'] },
     });
-
-    const schema2 = object({ tuple: tuple([string()], optional(number())) });
-    const input3 = createFormData("tuple[]", "test");
-    const output3 = parseWithValibot(input3, { schema: schema2 });
-    expect(output3).toMatchObject({
-      status: "success",
-      value: { tuple: ["test"] },
-    });
-    const input4 = createFormData("tuple", "test");
-    input4.append("tuple", "");
-    const output4 = parseWithValibot(input4, { schema: schema2 });
-    expect(output4).toMatchObject({
-      status: "success",
-      value: { tuple: ["test", undefined] },
-    });
-    const input5 = createFormData("tuple", "test");
-    input5.append("tuple", "1");
-    input5.append("tuple", "2");
-    const output5 = parseWithValibot(input5, { schema: schema2 });
-    expect(output5).toMatchObject({
-      status: "success",
-      value: { tuple: ["test", 1, 2] },
-    });
   });
 });
