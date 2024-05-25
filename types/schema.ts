@@ -15,6 +15,7 @@ import type {
   UnionIssue,
   IntersectSchema,
   IntersectIssue,
+  IntersectOptions,
   BaseIssue,
   ArraySchema,
   ArrayIssue,
@@ -90,7 +91,7 @@ export type OptionsSchema =
       VariantOptions<string>,
       ErrorMessage<VariantIssue> | undefined
     >
-  | IntersectSchema<ValibotSchema[], ErrorMessage<IntersectIssue> | undefined>
+  | IntersectSchema<IntersectOptions, ErrorMessage<IntersectIssue> | undefined>
   | TupleSchema<ValibotSchema[], ErrorMessage<TupleIssue> | undefined>
   | TupleWithRestSchema<
       ValibotSchema[],

@@ -5,6 +5,8 @@ import {
   transform,
   type SchemaWithPipe,
   type TransformAction,
+  type PipeItem,
+  type BaseIssue,
 } from "valibot";
 
 /**
@@ -56,12 +58,24 @@ export function coerceFile(file: unknown) {
  * This coerce empty values to undefined and transform strings to the correct type
  */
 export function enableTypeCoercion<T extends AllSchema>(
-  type: T,
+  type:
+    | T
+    | SchemaWithPipe<[T, ...PipeItem<unknown, unknown, BaseIssue<unknown>>[]]>,
 ):
   | SchemaWithPipe<
-      [UnknownSchema, TransformAction<unknown, unknown | unknown[]>, T]
+      [
+        UnknownSchema,
+        TransformAction<unknown, unknown | unknown[]>,
+        (
+          | T
+          | SchemaWithPipe<
+              [T, ...PipeItem<unknown, unknown, BaseIssue<unknown>>[]]
+            >
+        ),
+      ]
     >
-  | AllSchema {
+  | T
+  | SchemaWithPipe<[T, ...PipeItem<unknown, unknown, BaseIssue<unknown>>[]]> {
   // `expects` is required to generate error messages for `TupleSchema`, so it is passed to `UnkonwSchema` for coercion.
   const unknown = { ...valibotUnknown(), expects: type.expects };
 
@@ -118,6 +132,7 @@ export function enableTypeCoercion<T extends AllSchema>(
   } else if (type.type === "array") {
     const arraySchema: typeof type = {
       ...type,
+      // @ts-expect-error
       item: enableTypeCoercion(type.item),
     };
     return arraySchema;
@@ -129,6 +144,7 @@ export function enableTypeCoercion<T extends AllSchema>(
     type.type === "non_nullish" ||
     type.type === "non_nullable"
   ) {
+    // @ts-expect-error
     const wrapSchema = enableTypeCoercion(type.wrapped);
 
     if ("pipe" in wrapSchema) {
@@ -137,6 +153,7 @@ export function enableTypeCoercion<T extends AllSchema>(
 
     const wrappedSchema: typeof type = {
       ...type,
+      // @ts-expect-error
       wrapped: enableTypeCoercion(type.wrapped),
     };
 
@@ -144,12 +161,16 @@ export function enableTypeCoercion<T extends AllSchema>(
   } else if (type.type === "union" || type.type === "intersect") {
     const unionSchema: typeof type = {
       ...type,
-      options: type.options.map((option) => enableTypeCoercion(option)),
+      // @ts-expect-error
+      options: type.options.map((option) =>
+        enableTypeCoercion(option as ObjectSchema),
+      ),
     };
     return unionSchema;
   } else if (type.type === "variant") {
     const variantSchema: typeof type = {
       ...type,
+      // @ts-expect-error
       options: type.options.map((option) =>
         enableTypeCoercion(option as ObjectSchema),
       ),
@@ -158,13 +179,16 @@ export function enableTypeCoercion<T extends AllSchema>(
   } else if (type.type === "tuple") {
     const tupleSchema: typeof type = {
       ...type,
+      // @ts-expect-error
       items: type.items.map((option) => enableTypeCoercion(option)),
     };
     return tupleSchema;
   } else if (type.type === "tuple_with_rest") {
     const tupleWithRestSchema: typeof type = {
       ...type,
+      // @ts-expect-error
       items: type.items.map((option) => enableTypeCoercion(option)),
+      // @ts-expect-error
       rest: enableTypeCoercion(type.rest),
     };
     return tupleWithRestSchema;
@@ -172,6 +196,7 @@ export function enableTypeCoercion<T extends AllSchema>(
     const objectSchema: typeof type = {
       ...type,
       entries: Object.fromEntries(
+        // @ts-expect-error
         Object.entries(type.entries).map(([key, def]) => [
           key,
           enableTypeCoercion(def as AllSchema),
