@@ -9,16 +9,12 @@ import {
   type InferOutput,
   type Config,
   type SafeParseResult,
+  type GenericSchema,
   safeParse,
 } from "valibot";
-import type { AllSchema } from "./types/schema";
 import { enableTypeCoercion } from "./coercion";
 
-export function parseWithValibot<
-  Schema extends AllSchema & {
-    type: string;
-  },
->(
+export function parseWithValibot<Schema extends GenericSchema>(
   payload: FormData | URLSearchParams,
   config: {
     schema: Schema | ((intent: string) => Schema);
@@ -28,11 +24,7 @@ export function parseWithValibot<
     >;
   },
 ): Submission<InferOutput<Schema>>;
-export function parseWithValibot<
-  Schema extends AllSchema & {
-    type: string;
-  },
->(
+export function parseWithValibot<Schema extends GenericSchema>(
   payload: FormData | URLSearchParams,
   config: {
     schema: Schema | ((intent: string) => Schema);
@@ -42,11 +34,7 @@ export function parseWithValibot<
     >;
   },
 ): Promise<Submission<InferOutput<Schema>>>;
-export function parseWithValibot<
-  Schema extends AllSchema & {
-    type: string;
-  },
->(
+export function parseWithValibot<Schema extends GenericSchema>(
   payload: FormData | URLSearchParams,
   config: {
     schema: Schema | ((intent: Intent | null) => Schema);
@@ -59,6 +47,7 @@ export function parseWithValibot<
   return baseParse<InferOutput<Schema>, string[]>(payload, {
     resolve(payload, intent) {
       const schema = enableTypeCoercion(
+        // @ts-expect-error
         typeof config.schema === "function"
           ? config.schema(intent)
           : config.schema,
