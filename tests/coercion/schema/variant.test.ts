@@ -58,7 +58,7 @@ describe("variant", () => {
     const errorInput2 = createFormData("type2", "a");
     expect(parseWithValibot(errorInput2, { schema: schema2 })).toMatchObject({
       error: {
-        type: ['Invalid type: Expected "a" | "b" but received undefined'],
+        type: ['Invalid type: Expected "a" | "b" | "c" but received undefined'],
       },
     });
   });
