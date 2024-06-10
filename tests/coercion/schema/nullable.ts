@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { string, number, object, nullable } from "valibot";
+import { string, number, object, nullable, check, pipe } from "valibot";
 import { parseWithValibot } from "../../../parse";
 import { createFormData } from "../../helpers/FormData";
 
@@ -21,6 +21,37 @@ describe("nullable", () => {
     expect(
       parseWithValibot(createFormData("age", "non number"), { schema }),
     ).toMatchObject({ error: { age: ["Invalid type"] } });
+  });
+
+  test("should pass nullable with pipe", () => {
+    const schema = object({
+      age: pipe(
+        nullable(number()),
+        check(
+          (value) => value == null || value > 0,
+          "age must be greater than 0",
+        ),
+      ),
+    });
+
+    const output1 = parseWithValibot(createFormData("age", ""), { schema });
+    expect(output1).toMatchObject({
+      status: "success",
+      value: { age: undefined },
+    });
+
+    const output2 = parseWithValibot(createFormData("age", "20"), { schema });
+    expect(output2).toMatchObject({
+      status: "success",
+      value: { age: 20 },
+    });
+
+    const errorOutput = parseWithValibot(createFormData("age", "0"), {
+      schema,
+    });
+    expect(errorOutput).toMatchObject({
+      error: { age: ["age must be greater than 0"] },
+    });
   });
 
   test("should use default if required", () => {

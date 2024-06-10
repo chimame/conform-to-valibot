@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { parseWithValibot } from "../../../parse";
-import { object, array, string } from "valibot";
+import { object, array, string, pipe, check } from "valibot";
 import { createFormData } from "../../helpers/FormData";
 
 describe("array", () => {
@@ -32,6 +32,26 @@ describe("array", () => {
           "Invalid type: Expected string but received undefined",
         ],
       },
+    });
+  });
+
+  test("should pass arrays with pipe", () => {
+    const schema = object({
+      select: pipe(
+        array(string()),
+        check((value) => value.length === 3, "error in number of arrays"),
+      ),
+    });
+    const formData = createFormData("select", "1");
+    formData.append("select", "2");
+    formData.append("select", "3");
+
+    const outputWithPipe = parseWithValibot(formData, {
+      schema,
+    });
+    expect(outputWithPipe).toMatchObject({
+      status: "success",
+      value: { select: ["1", "2", "3"] },
     });
   });
 });
