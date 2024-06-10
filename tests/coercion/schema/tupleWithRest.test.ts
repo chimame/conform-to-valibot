@@ -1,7 +1,14 @@
 import { describe, expect, test } from "vitest";
-import { optional } from "valibot";
 import { parseWithValibot } from "../../../parse";
-import { number, object, string, tupleWithRest } from "valibot";
+import {
+  optional,
+  number,
+  object,
+  string,
+  tupleWithRest,
+  check,
+  pipe,
+} from "valibot";
 import { createFormData } from "../../helpers/FormData";
 
 describe("tupleWithRest", () => {
@@ -29,6 +36,29 @@ describe("tupleWithRest", () => {
     expect(output5).toMatchObject({
       status: "success",
       value: { tuple: ["test", 1, 2] },
+    });
+  });
+
+  test("should pass tuples with pipe", () => {
+    const schema = object({
+      tuple: pipe(
+        tupleWithRest([string()], optional(number())),
+        check((v) => v.length > 2, "tuple must have more than 1 element"),
+      ),
+    });
+    const input = createFormData("tuple", "test");
+    input.append("tuple", "1");
+    input.append("tuple", "2");
+    const output = parseWithValibot(input, { schema });
+    expect(output).toMatchObject({
+      status: "success",
+      value: { tuple: ["test", 1, 2] },
+    });
+
+    const errorInput = createFormData("tuple", "test");
+    errorInput.append("tuple", "1");
+    expect(parseWithValibot(errorInput, { schema })).toMatchObject({
+      error: { tuple: ["tuple must have more than 1 element"] },
     });
   });
 });

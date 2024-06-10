@@ -1,4 +1,4 @@
-import { number, string, object } from "valibot";
+import { number, string, object, pipe, check, forward } from "valibot";
 import { describe, expect, test } from "vitest";
 import { parseWithValibot } from "../../../parse";
 import { createFormData } from "../../helpers/FormData";
@@ -36,6 +36,35 @@ describe("object", () => {
     expect(output4).toMatchObject({
       error: {
         key2: ["Invalid type: Expected number but received NaN"],
+      },
+    });
+  });
+
+  test("should pass objects with pipe", () => {
+    const schema = pipe(
+      object({
+        key: string(),
+      }),
+      forward(
+        check(({ key }) => key !== "error name", "key is error"),
+        ["key"],
+      ),
+    );
+
+    const output = parseWithValibot(createFormData("key", "valid"), {
+      schema,
+    });
+    expect(output).toMatchObject({
+      status: "success",
+      value: { key: "valid" },
+    });
+
+    const errorOutput = parseWithValibot(createFormData("key", "error name"), {
+      schema,
+    });
+    expect(errorOutput).toMatchObject({
+      error: {
+        key: ["key is error"],
       },
     });
   });

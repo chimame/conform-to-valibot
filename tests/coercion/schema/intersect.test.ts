@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { literal, object, string, intersect } from "valibot";
+import { literal, object, string, intersect, check, pipe } from "valibot";
 import { parseWithValibot } from "../../../parse";
 import { createFormData } from "../../helpers/FormData";
 
@@ -53,6 +53,29 @@ describe("intersect", () => {
     const errorOutput4 = parseWithValibot(errorInput4, { schema: schema2 });
     expect(errorOutput4).toMatchObject({
       error: { foo: ["Invalid type: Expected string but received undefined"] },
+    });
+  });
+
+  test("should pass only intersect values with pipe", () => {
+    const schema = object({
+      intersect: pipe(
+        intersect([string()]),
+        check((value) => value === "test", "intersect must be equal to test"),
+      ),
+    });
+    const input1 = createFormData("intersect", "test");
+    const output1 = parseWithValibot(input1, { schema });
+    expect(output1).toMatchObject({
+      status: "success",
+      value: { intersect: "test" },
+    });
+
+    const errorInput1 = createFormData("intersect", "foo");
+    const errorOutput1 = parseWithValibot(errorInput1, { schema });
+    expect(errorOutput1).toMatchObject({
+      error: {
+        intersect: ["intersect must be equal to test"],
+      },
     });
   });
 

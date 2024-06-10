@@ -1,7 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { optional } from "valibot";
 import { parseWithValibot } from "../../../parse";
-import { number, object, string, tuple } from "valibot";
+import { number, object, string, tuple, check, pipe } from "valibot";
 import { createFormData } from "../../helpers/FormData";
 
 describe("tuple", () => {
@@ -30,6 +29,31 @@ describe("tuple", () => {
     const errorInput2 = createFormData("tuple", "123");
     expect(parseWithValibot(errorInput2, { schema: schema1 })).toMatchObject({
       error: { tuple: ['Invalid type: Expected Array but received "123"'] },
+    });
+  });
+
+  test("should pass only tuples with pipe", () => {
+    const schema = object({
+      tuple: pipe(
+        tuple([number(), string()]),
+        check(([num, str]) => num > 0, "num is not greater than 0"),
+      ),
+    });
+
+    const input = createFormData("tuple", "1");
+    input.append("tuple", "test");
+    const output = parseWithValibot(input, {
+      schema,
+    });
+    expect(output).toMatchObject({
+      status: "success",
+      value: { tuple: [1, "test"] },
+    });
+
+    const errorInput = createFormData("tuple", "0");
+    errorInput.append("tuple", "test");
+    expect(parseWithValibot(errorInput, { schema })).toMatchObject({
+      error: { tuple: ["num is not greater than 0"] },
     });
   });
 });

@@ -1,6 +1,15 @@
 import { describe, expect, test } from "vitest";
 import { parseWithValibot } from "../../../parse";
-import { object, variant, literal, number, string } from "valibot";
+import {
+  object,
+  variant,
+  literal,
+  number,
+  string,
+  check,
+  pipe,
+  forward,
+} from "valibot";
 import { createFormData } from "../../helpers/FormData";
 
 describe("variant", () => {
@@ -60,6 +69,44 @@ describe("variant", () => {
       error: {
         type: ['Invalid type: Expected "a" | "b" | "c" but received undefined'],
       },
+    });
+  });
+
+  test("should pass only variant values with pipe", () => {
+    const schema = pipe(
+      variant("type", [
+        object({ type: literal("a"), a: string() }),
+        object({ type: literal("b"), b: number() }),
+      ]),
+      forward(
+        check(
+          ({ type, ...other }) =>
+            type === "a" || (type === "b" && "b" in other && other.b !== 0),
+          "b must be non-zero",
+        ),
+        ["b"],
+      ),
+    );
+    const input1 = createFormData("type", "a");
+    input1.append("a", "hello");
+    const output1 = parseWithValibot(input1, { schema });
+    expect(output1).toMatchObject({
+      status: "success",
+      value: { type: "a", a: "hello" },
+    });
+    const input2 = createFormData("type", "b");
+    input2.append("b", "123");
+    const output2 = parseWithValibot(input2, { schema });
+    expect(output2).toMatchObject({
+      status: "success",
+      value: { type: "b", b: 123 },
+    });
+
+    const errorInput1 = createFormData("type", "b");
+    errorInput1.append("b", "0");
+    const errorOutput1 = parseWithValibot(errorInput1, { schema });
+    expect(errorOutput1).toMatchObject({
+      error: { b: ["b must be non-zero"] },
     });
   });
 });

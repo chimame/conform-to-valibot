@@ -54,6 +54,38 @@ export function coerceFile(file: unknown) {
 }
 
 /**
+ * If a pipe is assigned by referencing the original schema, convert it to assign the original pipe to the coerced schema.
+ * @param originalSchema The original schema
+ * @param coercionSchema The schema to be coerced
+ * @returns The coerced schema with the original pipe
+ */
+function generateReturnSchema<
+  T extends AllSchema,
+  E extends
+    | AllSchema
+    | SchemaWithPipe<
+        [AllSchema, ...PipeItem<unknown, unknown, BaseIssue<unknown>>[]]
+      >,
+>(
+  originalSchema:
+    | T
+    | SchemaWithPipe<[T, ...PipeItem<unknown, unknown, BaseIssue<unknown>>[]]>,
+  coercionSchema: E,
+):
+  | E
+  | SchemaWithPipe<[E, ...PipeItem<unknown, unknown, BaseIssue<unknown>>[]]> {
+  if ("pipe" in originalSchema) {
+    return pipe(
+      coercionSchema,
+      // @ts-expect-error
+      ...originalSchema.pipe.slice(1),
+    );
+  }
+
+  return coercionSchema;
+}
+
+/**
  * Reconstruct the provided schema with additional preprocessing steps
  * This coerce empty values to undefined and transform strings to the correct type
  */
@@ -74,10 +106,12 @@ export function enableTypeCoercion<T extends AllSchema>(
         ),
       ]
     >
+  | ReturnType<typeof generateReturnSchema>
   | T
   | SchemaWithPipe<[T, ...PipeItem<unknown, unknown, BaseIssue<unknown>>[]]> {
   // `expects` is required to generate error messages for `TupleSchema`, so it is passed to `UnkonwSchema` for coercion.
   const unknown = { ...valibotUnknown(), expects: type.expects };
+  const originalSchema = "pipe" in type ? type.pipe[0] : type;
 
   if (
     type.type === "string" ||
@@ -131,11 +165,11 @@ export function enableTypeCoercion<T extends AllSchema>(
     );
   } else if (type.type === "array") {
     const arraySchema: typeof type = {
-      ...type,
+      ...originalSchema,
       // @ts-expect-error
-      item: enableTypeCoercion(type.item),
+      item: enableTypeCoercion(originalSchema.item),
     };
-    return arraySchema;
+    return generateReturnSchema(type, arraySchema);
   } else if (
     type.type === "optional" ||
     type.type === "nullish" ||
@@ -152,58 +186,59 @@ export function enableTypeCoercion<T extends AllSchema>(
     }
 
     const wrappedSchema: typeof type = {
-      ...type,
+      ...originalSchema,
       // @ts-expect-error
-      wrapped: enableTypeCoercion(type.wrapped),
+      wrapped: enableTypeCoercion(originalSchema.wrapped),
     };
 
-    return wrappedSchema;
+    return generateReturnSchema(type, wrappedSchema);
   } else if (type.type === "union" || type.type === "intersect") {
     const unionSchema: typeof type = {
-      ...type,
+      ...originalSchema,
       // @ts-expect-error
-      options: type.options.map((option) =>
+      options: originalSchema.options.map((option) =>
         enableTypeCoercion(option as ObjectSchema),
       ),
     };
-    return unionSchema;
+    return generateReturnSchema(type, unionSchema);
   } else if (type.type === "variant") {
     const variantSchema: typeof type = {
-      ...type,
+      ...originalSchema,
       // @ts-expect-error
-      options: type.options.map((option) =>
+      options: originalSchema.options.map((option) =>
         enableTypeCoercion(option as ObjectSchema),
       ),
     };
-    return variantSchema;
+    return generateReturnSchema(type, variantSchema);
   } else if (type.type === "tuple") {
     const tupleSchema: typeof type = {
-      ...type,
+      ...originalSchema,
       // @ts-expect-error
-      items: type.items.map((option) => enableTypeCoercion(option)),
+      items: originalSchema.items.map((option) => enableTypeCoercion(option)),
     };
-    return tupleSchema;
+    return generateReturnSchema(type, tupleSchema);
   } else if (type.type === "tuple_with_rest") {
     const tupleWithRestSchema: typeof type = {
-      ...type,
+      ...originalSchema,
       // @ts-expect-error
-      items: type.items.map((option) => enableTypeCoercion(option)),
+      items: originalSchema.items.map((option) => enableTypeCoercion(option)),
       // @ts-expect-error
-      rest: enableTypeCoercion(type.rest),
+      rest: enableTypeCoercion(originalSchema.rest),
     };
-    return tupleWithRestSchema;
+    return generateReturnSchema(type, tupleWithRestSchema);
   } else if (type.type === "object") {
     const objectSchema: typeof type = {
-      ...type,
+      ...originalSchema,
       entries: Object.fromEntries(
         // @ts-expect-error
-        Object.entries(type.entries).map(([key, def]) => [
+        Object.entries(originalSchema.entries).map(([key, def]) => [
           key,
           enableTypeCoercion(def as AllSchema),
         ]),
       ),
     };
-    return objectSchema;
+
+    return generateReturnSchema(type, objectSchema);
   }
 
   return pipe(

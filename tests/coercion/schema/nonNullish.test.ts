@@ -7,6 +7,8 @@ import {
   nonNullish,
   union,
   undefined_,
+  check,
+  pipe,
 } from "valibot";
 import { createFormData } from "../../helpers/FormData";
 
@@ -63,6 +65,37 @@ describe("nonOptional", () => {
           "Invalid type: Expected !null & !undefined but received undefined",
         ],
       },
+    });
+  });
+
+  test("should pass nonNullish with pipe", () => {
+    const schema = object({
+      age: pipe(
+        nonNullish(optional(number())),
+        check((value) => value > 0, "age must be greater than 0"),
+      ),
+    });
+
+    const output1 = parseWithValibot(createFormData("age", ""), { schema });
+    expect(output1).toMatchObject({
+      error: {
+        age: [
+          "Invalid type: Expected !null & !undefined but received undefined",
+        ],
+      },
+    });
+
+    const output2 = parseWithValibot(createFormData("age", "20"), { schema });
+    expect(output2).toMatchObject({
+      status: "success",
+      value: { age: 20 },
+    });
+
+    const errorOutput = parseWithValibot(createFormData("age", "0"), {
+      schema,
+    });
+    expect(errorOutput).toMatchObject({
+      error: { age: ["age must be greater than 0"] },
     });
   });
 });
