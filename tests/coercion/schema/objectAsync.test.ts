@@ -3,15 +3,15 @@ import {
   string,
   objectAsync,
   pipeAsync,
-  check,
-  forward,
+  checkAsync,
+  forwardAsync,
 } from "valibot";
 import { describe, expect, test } from "vitest";
 import { parseWithValibot } from "../../../parse";
 import { createFormData } from "../../helpers/FormData";
 
 describe("objectAsync", () => {
-  test("should pass only async objects", async () => {
+  test("should pass only objects", async () => {
     const schema1 = objectAsync({ key1: string(), key2: number() });
     const input1 = createFormData("key1", "test");
     input1.append("key2", "123");
@@ -47,13 +47,13 @@ describe("objectAsync", () => {
     });
   });
 
-  test("should pass async objects with pipe", async () => {
+  test("should pass objects with pipe", async () => {
     const schema = pipeAsync(
       objectAsync({
         key: string(),
       }),
-      forward(
-        check(({ key }) => key !== "error name", "key is error"),
+      forwardAsync(
+        checkAsync(async ({ key }) => key !== "error name", "key is error"),
         ["key"],
       ),
     );

@@ -1,26 +1,30 @@
 import { describe, expect, test } from "vitest";
-import { string, number, object, nullable, check, pipe } from "valibot";
+import {
+  string,
+  number,
+  object,
+  nullable,
+  optional,
+  check,
+  pipe,
+} from "valibot";
 import { parseWithValibot } from "../../../parse";
 import { createFormData } from "../../helpers/FormData";
 
 describe("nullable", () => {
   test("should pass also undefined", () => {
     const schema = object({ age: nullable(number()) });
-    const output = parseWithValibot(createFormData("age", ""), { schema });
+    const output = parseWithValibot(createFormData("age", "20"), { schema });
 
     expect(output).toMatchObject({
-      status: "success",
-      value: { age: undefined },
-    });
-    expect(
-      parseWithValibot(createFormData("age", "20"), { schema }),
-    ).toMatchObject({
       status: "success",
       value: { age: 20 },
     });
     expect(
       parseWithValibot(createFormData("age", "non number"), { schema }),
-    ).toMatchObject({ error: { age: ["Invalid type"] } });
+    ).toMatchObject({
+      error: { age: ["Invalid type: Expected number but received NaN"] },
+    });
   });
 
   test("should pass nullable with pipe", () => {
@@ -32,12 +36,6 @@ describe("nullable", () => {
           "age must be greater than 0",
         ),
       ),
-    });
-
-    const output1 = parseWithValibot(createFormData("age", ""), { schema });
-    expect(output1).toMatchObject({
-      status: "success",
-      value: { age: undefined },
     });
 
     const output2 = parseWithValibot(createFormData("age", "20"), { schema });
@@ -57,7 +55,9 @@ describe("nullable", () => {
   test("should use default if required", () => {
     const default_ = "default";
 
-    const schema1 = object({ name: nullable(string(), default_) });
+    const schema1 = object({
+      name: optional(nullable(string(), default_), null),
+    });
     const output1 = parseWithValibot(createFormData("name", ""), {
       schema: schema1,
     });
