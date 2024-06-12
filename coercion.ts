@@ -1,15 +1,14 @@
-import type { ObjectSchema } from "./types/schema";
 import {
   unknown as valibotUnknown,
   pipe,
+  pipeAsync,
   transform as vTransform,
   type SchemaWithPipe,
   type PipeItem,
   type BaseIssue,
   type GenericSchema,
-  GenericSchemaAsync,
-  SchemaWithPipeAsync,
-  pipeAsync,
+  type GenericSchemaAsync,
+  type SchemaWithPipeAsync,
 } from "valibot";
 
 /**
@@ -50,6 +49,7 @@ function coerce<T extends GenericSchema | GenericSchemaAsync>(
   type: T,
   transform?: (text: string) => unknown,
 ) {
+  // `expects` is required to generate error messages for `TupleSchema`, so it is passed to `UnkonwSchema` for coercion.
   const unknown = { ...valibotUnknown(), expects: type.expects };
 
   if (type.async) {
@@ -153,14 +153,11 @@ export function enableTypeCoercion<
 ):
   | ReturnType<typeof coerce>
   | ReturnType<typeof generateReturnSchema>
-  | T
   | (T extends GenericSchema
       ? SchemaWithPipe<[T, ...PipeItem<unknown, unknown, BaseIssue<unknown>>[]]>
       : SchemaWithPipeAsync<
           [T, ...PipeItem<unknown, unknown, BaseIssue<unknown>>[]]
         >) {
-  // `expects` is required to generate error messages for `TupleSchema`, so it is passed to `UnkonwSchema` for coercion.
-  const unknown = { ...valibotUnknown(), expects: type.expects };
   const originalSchema = "pipe" in type ? type.pipe[0] : type;
 
   if (
@@ -208,6 +205,8 @@ export function enableTypeCoercion<
     const wrapSchema = enableTypeCoercion(type.wrapped);
 
     if ("pipe" in wrapSchema) {
+      // `expects` is required to generate error messages for `TupleSchema`, so it is passed to `UnkonwSchema` for coercion.
+      const unknown = { ...valibotUnknown(), expects: type.expects };
       if (type.async) {
         return pipeAsync(unknown, wrapSchema.pipe[1], type);
       }
@@ -226,7 +225,7 @@ export function enableTypeCoercion<
       ...originalSchema,
       // @ts-expect-error
       options: originalSchema.options.map((option) =>
-        enableTypeCoercion(option as ObjectSchema),
+        enableTypeCoercion(option as GenericSchema),
       ),
     };
     return generateReturnSchema(type, unionSchema);
@@ -235,7 +234,7 @@ export function enableTypeCoercion<
       ...originalSchema,
       // @ts-expect-error
       options: originalSchema.options.map((option) =>
-        enableTypeCoercion(option as ObjectSchema),
+        enableTypeCoercion(option as GenericSchema),
       ),
     };
     return generateReturnSchema(type, variantSchema);
