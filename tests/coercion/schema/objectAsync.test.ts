@@ -10,7 +10,7 @@ import { describe, expect, test } from "vitest";
 import { parseWithValibot } from "../../../parse";
 import { createFormData } from "../../helpers/FormData";
 
-describe("object", () => {
+describe("objectAsync", () => {
   test("should pass only async objects", async () => {
     const schema1 = objectAsync({ key1: string(), key2: number() });
     const input1 = createFormData("key1", "test");
