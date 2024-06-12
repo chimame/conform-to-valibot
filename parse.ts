@@ -81,11 +81,10 @@ export function parseWithValibot<
         };
       };
 
-      if (originalSchema.async === true) {
+      if (schema.async === true) {
         return safeParseAsync(schema, payload, config.info).then(resolveResult);
       }
 
-      // @ts-expect-error
       return resolveResult(safeParse(schema, payload, config.info));
     },
   });
