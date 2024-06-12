@@ -10,7 +10,9 @@ import {
   type Config,
   type SafeParseResult,
   type GenericSchema,
+  type GenericSchemaAsync,
   safeParse,
+  safeParseAsync,
 } from "valibot";
 import { enableTypeCoercion } from "./coercion";
 
@@ -24,7 +26,7 @@ export function parseWithValibot<Schema extends GenericSchema>(
     >;
   },
 ): Submission<InferOutput<Schema>>;
-export function parseWithValibot<Schema extends GenericSchema>(
+export function parseWithValibot<Schema extends GenericSchemaAsync>(
   payload: FormData | URLSearchParams,
   config: {
     schema: Schema | ((intent: string) => Schema);
@@ -34,7 +36,9 @@ export function parseWithValibot<Schema extends GenericSchema>(
     >;
   },
 ): Promise<Submission<InferOutput<Schema>>>;
-export function parseWithValibot<Schema extends GenericSchema>(
+export function parseWithValibot<
+  Schema extends GenericSchema | GenericSchemaAsync,
+>(
   payload: FormData | URLSearchParams,
   config: {
     schema: Schema | ((intent: Intent | null) => Schema);
@@ -46,12 +50,11 @@ export function parseWithValibot<Schema extends GenericSchema>(
 ): Submission<InferOutput<Schema>> | Promise<Submission<InferOutput<Schema>>> {
   return baseParse<InferOutput<Schema>, string[]>(payload, {
     resolve(payload, intent) {
-      const schema = enableTypeCoercion(
-        // @ts-expect-error
+      const originalSchema =
         typeof config.schema === "function"
           ? config.schema(intent)
-          : config.schema,
-      );
+          : config.schema;
+      const schema = enableTypeCoercion(originalSchema);
 
       const resolveResult = (
         result: SafeParseResult<Schema>,
@@ -78,6 +81,11 @@ export function parseWithValibot<Schema extends GenericSchema>(
         };
       };
 
+      if (originalSchema.async === true) {
+        return safeParseAsync(schema, payload, config.info).then(resolveResult);
+      }
+
+      // @ts-expect-error
       return resolveResult(safeParse(schema, payload, config.info));
     },
   });

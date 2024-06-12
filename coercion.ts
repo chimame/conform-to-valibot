@@ -1,12 +1,15 @@
-import type { AllSchema, ObjectSchema, UnknownSchema } from "./types/schema";
+import type { ObjectSchema } from "./types/schema";
 import {
   unknown as valibotUnknown,
   pipe,
-  transform,
+  transform as vTransform,
   type SchemaWithPipe,
-  type TransformAction,
   type PipeItem,
   type BaseIssue,
+  type GenericSchema,
+  GenericSchemaAsync,
+  SchemaWithPipeAsync,
+  pipeAsync,
 } from "valibot";
 
 /**
@@ -37,6 +40,34 @@ export function coerceString(
 }
 
 /**
+ * Reconstruct the provided schema with additional preprocessing steps
+ * This coerce empty values to undefined and transform strings to the correct type
+ * @param type The schema to be coerced
+ * @param transform The transformation function
+ * @returns The coerced schema
+ */
+function coerce<T extends GenericSchema | GenericSchemaAsync>(
+  type: T,
+  transform?: (text: string) => unknown,
+) {
+  const unknown = { ...valibotUnknown(), expects: type.expects };
+
+  if (type.async) {
+    return pipeAsync(
+      unknown,
+      vTransform((output) => coerceString(output, transform)),
+      type,
+    );
+  }
+
+  return pipe(
+    unknown,
+    vTransform((output) => coerceString(output, transform)),
+    type,
+  );
+}
+
+/**
  * Helpers for coercing file
  * Modify the value only if it's a file, otherwise return the value as-is
  */
@@ -60,21 +91,39 @@ export function coerceFile(file: unknown) {
  * @returns The coerced schema with the original pipe
  */
 function generateReturnSchema<
-  T extends AllSchema,
+  T extends GenericSchema | GenericSchemaAsync,
   E extends
-    | AllSchema
+    | GenericSchema
+    | GenericSchemaAsync
     | SchemaWithPipe<
-        [AllSchema, ...PipeItem<unknown, unknown, BaseIssue<unknown>>[]]
+        [GenericSchema, ...PipeItem<unknown, unknown, BaseIssue<unknown>>[]]
+      >
+    | SchemaWithPipeAsync<
+        [
+          GenericSchema | GenericSchemaAsync,
+          ...PipeItem<unknown, unknown, BaseIssue<unknown>>[],
+        ]
       >,
 >(
   originalSchema:
     | T
-    | SchemaWithPipe<[T, ...PipeItem<unknown, unknown, BaseIssue<unknown>>[]]>,
+    | (T extends GenericSchema
+        ? SchemaWithPipe<
+            [T, ...PipeItem<unknown, unknown, BaseIssue<unknown>>[]]
+          >
+        : SchemaWithPipeAsync<
+            [T, ...PipeItem<unknown, unknown, BaseIssue<unknown>>[]]
+          >),
   coercionSchema: E,
-):
-  | E
-  | SchemaWithPipe<[E, ...PipeItem<unknown, unknown, BaseIssue<unknown>>[]]> {
+) {
   if ("pipe" in originalSchema) {
+    if (originalSchema.async && coercionSchema.async) {
+      return pipeAsync(
+        coercionSchema,
+        // @ts-expect-error
+        ...originalSchema.pipe.slice(1),
+      );
+    }
     return pipe(
       coercionSchema,
       // @ts-expect-error
@@ -89,26 +138,27 @@ function generateReturnSchema<
  * Reconstruct the provided schema with additional preprocessing steps
  * This coerce empty values to undefined and transform strings to the correct type
  */
-export function enableTypeCoercion<T extends AllSchema>(
+export function enableTypeCoercion<
+  T extends GenericSchema | GenericSchemaAsync,
+>(
   type:
     | T
-    | SchemaWithPipe<[T, ...PipeItem<unknown, unknown, BaseIssue<unknown>>[]]>,
+    | (T extends GenericSchema
+        ? SchemaWithPipe<
+            [T, ...PipeItem<unknown, unknown, BaseIssue<unknown>>[]]
+          >
+        : SchemaWithPipeAsync<
+            [T, ...PipeItem<unknown, unknown, BaseIssue<unknown>>[]]
+          >),
 ):
-  | SchemaWithPipe<
-      [
-        UnknownSchema,
-        TransformAction<unknown, unknown | unknown[]>,
-        (
-          | T
-          | SchemaWithPipe<
-              [T, ...PipeItem<unknown, unknown, BaseIssue<unknown>>[]]
-            >
-        ),
-      ]
-    >
+  | ReturnType<typeof coerce>
   | ReturnType<typeof generateReturnSchema>
   | T
-  | SchemaWithPipe<[T, ...PipeItem<unknown, unknown, BaseIssue<unknown>>[]]> {
+  | (T extends GenericSchema
+      ? SchemaWithPipe<[T, ...PipeItem<unknown, unknown, BaseIssue<unknown>>[]]>
+      : SchemaWithPipeAsync<
+          [T, ...PipeItem<unknown, unknown, BaseIssue<unknown>>[]]
+        >) {
   // `expects` is required to generate error messages for `TupleSchema`, so it is passed to `UnkonwSchema` for coercion.
   const unknown = { ...valibotUnknown(), expects: type.expects };
   const originalSchema = "pipe" in type ? type.pipe[0] : type;
@@ -119,52 +169,28 @@ export function enableTypeCoercion<T extends AllSchema>(
     type.type === "enum" ||
     type.type === "undefined"
   ) {
-    return pipe(
-      unknown,
-      transform((output) => coerceString(output)),
-      type,
-    );
+    return coerce(type);
   } else if (type.type === "number") {
-    return pipe(
-      unknown,
-      transform((output) => coerceString(output, Number)),
-      type,
-    );
+    return coerce(type, Number);
   } else if (type.type === "boolean") {
-    return pipe(
-      unknown,
-      transform((output) =>
-        coerceString(output, (text) => (text === "on" ? true : text)),
-      ),
-      type,
-    );
+    return coerce(type, (text) => (text === "on" ? true : text));
   } else if (type.type === "date") {
-    return pipe(
-      unknown,
-      transform((output) =>
-        coerceString(output, (timestamp) => {
-          const date = new Date(timestamp);
+    return coerce(type, (timestamp) => {
+      const date = new Date(timestamp);
 
-          // z.date() does not expose a quick way to set invalid_date error
-          // This gets around it by returning the original string if it's invalid
-          // See https://github.com/colinhacks/zod/issues/1526
-          if (Number.isNaN(date.getTime())) {
-            return timestamp;
-          }
+      // z.date() does not expose a quick way to set invalid_date error
+      // This gets around it by returning the original string if it's invalid
+      // See https://github.com/colinhacks/zod/issues/1526
+      if (Number.isNaN(date.getTime())) {
+        return timestamp;
+      }
 
-          return date;
-        }),
-      ),
-      type,
-    );
+      return date;
+    });
   } else if (type.type === "bigint") {
-    return pipe(
-      unknown,
-      transform((output) => coerceString(output, BigInt)),
-      type,
-    );
+    return coerce(type, BigInt);
   } else if (type.type === "array") {
-    const arraySchema: typeof type = {
+    const arraySchema = {
       ...originalSchema,
       // @ts-expect-error
       item: enableTypeCoercion(originalSchema.item),
@@ -182,10 +208,13 @@ export function enableTypeCoercion<T extends AllSchema>(
     const wrapSchema = enableTypeCoercion(type.wrapped);
 
     if ("pipe" in wrapSchema) {
+      if (type.async) {
+        return pipeAsync(unknown, wrapSchema.pipe[1], type);
+      }
       return pipe(unknown, wrapSchema.pipe[1], type);
     }
 
-    const wrappedSchema: typeof type = {
+    const wrappedSchema = {
       ...originalSchema,
       // @ts-expect-error
       wrapped: enableTypeCoercion(originalSchema.wrapped),
@@ -193,7 +222,7 @@ export function enableTypeCoercion<T extends AllSchema>(
 
     return generateReturnSchema(type, wrappedSchema);
   } else if (type.type === "union" || type.type === "intersect") {
-    const unionSchema: typeof type = {
+    const unionSchema = {
       ...originalSchema,
       // @ts-expect-error
       options: originalSchema.options.map((option) =>
@@ -202,7 +231,7 @@ export function enableTypeCoercion<T extends AllSchema>(
     };
     return generateReturnSchema(type, unionSchema);
   } else if (type.type === "variant") {
-    const variantSchema: typeof type = {
+    const variantSchema = {
       ...originalSchema,
       // @ts-expect-error
       options: originalSchema.options.map((option) =>
@@ -211,14 +240,14 @@ export function enableTypeCoercion<T extends AllSchema>(
     };
     return generateReturnSchema(type, variantSchema);
   } else if (type.type === "tuple") {
-    const tupleSchema: typeof type = {
+    const tupleSchema = {
       ...originalSchema,
       // @ts-expect-error
       items: originalSchema.items.map((option) => enableTypeCoercion(option)),
     };
     return generateReturnSchema(type, tupleSchema);
   } else if (type.type === "tuple_with_rest") {
-    const tupleWithRestSchema: typeof type = {
+    const tupleWithRestSchema = {
       ...originalSchema,
       // @ts-expect-error
       items: originalSchema.items.map((option) => enableTypeCoercion(option)),
@@ -227,13 +256,13 @@ export function enableTypeCoercion<T extends AllSchema>(
     };
     return generateReturnSchema(type, tupleWithRestSchema);
   } else if (type.type === "object") {
-    const objectSchema: typeof type = {
+    const objectSchema = {
       ...originalSchema,
       entries: Object.fromEntries(
         // @ts-expect-error
         Object.entries(originalSchema.entries).map(([key, def]) => [
           key,
-          enableTypeCoercion(def as AllSchema),
+          enableTypeCoercion(def as GenericSchema),
         ]),
       ),
     };
@@ -241,9 +270,5 @@ export function enableTypeCoercion<T extends AllSchema>(
     return generateReturnSchema(type, objectSchema);
   }
 
-  return pipe(
-    unknown,
-    transform((output) => coerceString(output)),
-    type,
-  );
+  return coerce(type);
 }
