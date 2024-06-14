@@ -22,7 +22,7 @@ export function parseWithValibot<Schema extends GenericSchema>(
     schema: Schema | ((intent: string) => Schema);
     info?: Pick<
       Config<BaseIssue<unknown>>,
-      "abortEarly" | "abortPipeEarly" | "skipPipe" | "lang"
+      "abortEarly" | "abortPipeEarly" | "lang"
     >;
   },
 ): Submission<InferOutput<Schema>>;
@@ -32,7 +32,7 @@ export function parseWithValibot<Schema extends GenericSchemaAsync>(
     schema: Schema | ((intent: string) => Schema);
     info?: Pick<
       Config<BaseIssue<unknown>>,
-      "abortEarly" | "abortPipeEarly" | "skipPipe" | "lang"
+      "abortEarly" | "abortPipeEarly" | "lang"
     >;
   },
 ): Promise<Submission<InferOutput<Schema>>>;
@@ -44,7 +44,7 @@ export function parseWithValibot<
     schema: Schema | ((intent: Intent | null) => Schema);
     info?: Pick<
       Config<BaseIssue<unknown>>,
-      "abortEarly" | "abortPipeEarly" | "skipPipe" | "lang"
+      "abortEarly" | "abortPipeEarly" | "lang"
     >;
   },
 ): Submission<InferOutput<Schema>> | Promise<Submission<InferOutput<Schema>>> {
