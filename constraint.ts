@@ -1,6 +1,5 @@
 import type { Constraint } from "@conform-to/dom";
-import type { AllSchema } from "./types/schema";
-import type { SchemaWithPipe, PipeItem, BaseIssue } from "valibot";
+import type { GenericSchema, GenericSchemaAsync } from "valibot";
 
 const keys: Array<keyof Constraint> = [
   "required",
@@ -13,17 +12,11 @@ const keys: Array<keyof Constraint> = [
   "pattern",
 ];
 
-export function getValibotConstraint<T extends AllSchema>(
-  schema:
-    | T
-    | SchemaWithPipe<[T, ...PipeItem<unknown, unknown, BaseIssue<unknown>>[]]>,
-): Record<string, Constraint> {
+export function getValibotConstraint<
+  T extends GenericSchema | GenericSchemaAsync,
+>(schema: T): Record<string, Constraint> {
   function updateConstraint(
-    schema:
-      | T
-      | SchemaWithPipe<
-          [T, ...PipeItem<unknown, unknown, BaseIssue<unknown>>[]]
-        >,
+    schema: T,
 
     data: Record<string, Constraint>,
     name = "",

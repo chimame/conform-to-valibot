@@ -3,7 +3,7 @@ import { string, object, optional, nullable } from "valibot";
 import { parseWithValibot } from "../../../parse";
 import { createFormData } from "../../helpers/FormData";
 
-describe("pipe", () => {
+describe("wrap", () => {
   test("should pass also undefined", () => {
     const schema = object({ name: optional(nullable(string()), null) });
     const output = parseWithValibot(createFormData("name", ""), { schema });

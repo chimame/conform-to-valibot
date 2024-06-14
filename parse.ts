@@ -10,7 +10,9 @@ import {
   type Config,
   type SafeParseResult,
   type GenericSchema,
+  type GenericSchemaAsync,
   safeParse,
+  safeParseAsync,
 } from "valibot";
 import { enableTypeCoercion } from "./coercion";
 
@@ -20,38 +22,39 @@ export function parseWithValibot<Schema extends GenericSchema>(
     schema: Schema | ((intent: string) => Schema);
     info?: Pick<
       Config<BaseIssue<unknown>>,
-      "abortEarly" | "abortPipeEarly" | "skipPipe" | "lang"
+      "abortEarly" | "abortPipeEarly" | "lang"
     >;
   },
 ): Submission<InferOutput<Schema>>;
-export function parseWithValibot<Schema extends GenericSchema>(
+export function parseWithValibot<Schema extends GenericSchemaAsync>(
   payload: FormData | URLSearchParams,
   config: {
     schema: Schema | ((intent: string) => Schema);
     info?: Pick<
       Config<BaseIssue<unknown>>,
-      "abortEarly" | "abortPipeEarly" | "skipPipe" | "lang"
+      "abortEarly" | "abortPipeEarly" | "lang"
     >;
   },
 ): Promise<Submission<InferOutput<Schema>>>;
-export function parseWithValibot<Schema extends GenericSchema>(
+export function parseWithValibot<
+  Schema extends GenericSchema | GenericSchemaAsync,
+>(
   payload: FormData | URLSearchParams,
   config: {
     schema: Schema | ((intent: Intent | null) => Schema);
     info?: Pick<
       Config<BaseIssue<unknown>>,
-      "abortEarly" | "abortPipeEarly" | "skipPipe" | "lang"
+      "abortEarly" | "abortPipeEarly" | "lang"
     >;
   },
 ): Submission<InferOutput<Schema>> | Promise<Submission<InferOutput<Schema>>> {
   return baseParse<InferOutput<Schema>, string[]>(payload, {
     resolve(payload, intent) {
-      const schema = enableTypeCoercion(
-        // @ts-expect-error
+      const originalSchema =
         typeof config.schema === "function"
           ? config.schema(intent)
-          : config.schema,
-      );
+          : config.schema;
+      const schema = enableTypeCoercion(originalSchema);
 
       const resolveResult = (
         result: SafeParseResult<Schema>,
@@ -77,6 +80,10 @@ export function parseWithValibot<Schema extends GenericSchema>(
           }, {}),
         };
       };
+
+      if (schema.async === true) {
+        return safeParseAsync(schema, payload, config.info).then(resolveResult);
+      }
 
       return resolveResult(safeParse(schema, payload, config.info));
     },
