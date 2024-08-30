@@ -1,15 +1,15 @@
+import {
+  check,
+  nonOptional,
+  number,
+  object,
+  optional,
+  pipe,
+  undefined_,
+  union,
+} from "valibot";
 import { describe, expect, test } from "vitest";
 import { parseWithValibot } from "../../../parse";
-import {
-  object,
-  number,
-  optional,
-  nonOptional,
-  union,
-  undefined_,
-  check,
-  pipe,
-} from "valibot";
 import { createFormData } from "../../helpers/FormData";
 
 describe("nonOptional", () => {

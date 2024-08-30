@@ -1,15 +1,15 @@
-import { describe, expect, test } from "vitest";
-import { parseWithValibot } from "../../../parse";
 import {
-  object,
-  variantAsync,
+  checkAsync,
+  forwardAsync,
   literal,
   number,
-  string,
-  checkAsync,
+  object,
   pipeAsync,
-  forwardAsync,
+  string,
+  variantAsync,
 } from "valibot";
+import { describe, expect, test } from "vitest";
+import { parseWithValibot } from "../../../parse";
 import { createFormData } from "../../helpers/FormData";
 
 describe("variantAsync", () => {

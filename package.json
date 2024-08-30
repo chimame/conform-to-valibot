@@ -8,8 +8,8 @@
   "files": ["dist"],
   "scripts": {
     "build": "tsup",
-    "check:format": "npx @biomejs/biome format .",
-    "format": "npx @biomejs/biome format --write .",
+    "check": "npx @biomejs/biome check .",
+    "check:write": "npx @biomejs/biome check --write .",
     "prepack": "npm run build",
     "release": "semantic-release",
     "test": "vitest",
@@ -38,7 +38,7 @@
     "valibot": ">= 0.32.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.3.3",
+    "@biomejs/biome": "^1.8.3",
     "@conform-to/dom": "^1.0.0",
     "@tsconfig/node16": "^16.1.1",
     "@types/node": "^20.12.12",
@@ -46,6 +46,6 @@
     "tsup": "^8.0.0",
     "typescript": "^5.2.2",
     "valibot": "^0.32.0",
-    "vitest": "1.4.0"
+    "vitest": "2.0.5"
   }
 }

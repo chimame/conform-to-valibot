@@ -4,7 +4,7 @@
     "resolveJsonModule": true,
     "noErrorTruncation": true,
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
-    "noEmit": true,
+    "noEmit": true
   },
   "include": ["**/*.ts", "tests/**/*.ts", "tsup.config.ts"]
 }

@@ -1,15 +1,15 @@
-import { describe, expect, test } from "vitest";
-import { parseWithValibot } from "../../../parse";
 import {
-  object,
-  variant,
+  check,
+  forward,
   literal,
   number,
-  string,
-  check,
+  object,
   pipe,
-  forward,
+  string,
+  variant,
 } from "valibot";
+import { describe, expect, test } from "vitest";
+import { parseWithValibot } from "../../../parse";
 import { createFormData } from "../../helpers/FormData";
 
 describe("variant", () => {

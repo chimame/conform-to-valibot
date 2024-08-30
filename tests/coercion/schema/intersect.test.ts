@@ -1,5 +1,5 @@
+import { check, intersect, literal, object, pipe, string } from "valibot";
 import { describe, expect, test } from "vitest";
-import { literal, object, string, intersect, check, pipe } from "valibot";
 import { parseWithValibot } from "../../../parse";
 import { createFormData } from "../../helpers/FormData";
 

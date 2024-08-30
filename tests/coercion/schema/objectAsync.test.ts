@@ -1,10 +1,10 @@
 import {
-  number,
-  string,
-  objectAsync,
-  pipeAsync,
   checkAsync,
   forwardAsync,
+  number,
+  objectAsync,
+  pipeAsync,
+  string,
 } from "valibot";
 import { describe, expect, test } from "vitest";
 import { parseWithValibot } from "../../../parse";

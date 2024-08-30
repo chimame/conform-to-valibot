@@ -11,21 +11,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup packages
         uses: ./.github/actions/setup
 
   format:
-    name: Run biome format
+    name: Run biome check
     needs: install
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup packages
         uses: ./.github/actions/setup
       - name: Biome check
-        run: npm run check:format
+        run: npm run check
 
   test:
     name: Run test
@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup packages
         uses: ./.github/actions/setup
       - name: Vitest tests
@@ -45,7 +45,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup packages
         uses: ./.github/actions/setup
       - name: check types

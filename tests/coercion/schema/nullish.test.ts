@@ -1,5 +1,5 @@
+import { check, nullish, number, object, pipe, string } from "valibot";
 import { describe, expect, test } from "vitest";
-import { string, number, object, nullish, check, pipe } from "valibot";
 import { parseWithValibot } from "../../../parse";
 import { createFormData } from "../../helpers/FormData";
 

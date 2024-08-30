@@ -1,12 +1,12 @@
-import { describe, expect, test } from "vitest";
 import {
-  string,
+  checkAsync,
   number,
   objectAsync,
   optionalAsync,
-  checkAsync,
   pipeAsync,
+  string,
 } from "valibot";
+import { describe, expect, test } from "vitest";
 import { parseWithValibot } from "../../../parse";
 import { createFormData } from "../../helpers/FormData";
 
