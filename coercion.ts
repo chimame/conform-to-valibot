@@ -52,7 +52,9 @@ function coerce<T extends GenericSchema | GenericSchemaAsync>(
   // `expects` is required to generate error messages for `TupleSchema`, so it is passed to `UnkonwSchema` for coercion.
   const unknown = { ...valibotUnknown(), expects: type.expects };
   const transformFunction = (output: unknown) =>
-    type.type === "blob" ? coerceFile(output) : coerceString(output, transform);
+    type.type === "blob" || type.type === "file"
+      ? coerceFile(output)
+      : coerceString(output, transform);
 
   if (type.async) {
     return pipeAsync(unknown, vTransform(transformFunction), type);
@@ -180,6 +182,7 @@ export function enableTypeCoercion<
     case "bigint": {
       return coerce(type, BigInt);
     }
+    case "file":
     case "blob": {
       return coerce(type);
     }
