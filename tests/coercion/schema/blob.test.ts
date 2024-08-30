@@ -1,4 +1,4 @@
-import { object, blob, pipe, mimeType } from "valibot";
+import { blob, mimeType, object, pipe } from "valibot";
 import { describe, expect, test } from "vitest";
 import { parseWithValibot } from "../../../parse";
 import { createFormData } from "../../helpers/FormData";

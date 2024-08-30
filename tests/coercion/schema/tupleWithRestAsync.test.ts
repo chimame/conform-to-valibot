@@ -1,14 +1,14 @@
-import { describe, expect, test } from "vitest";
-import { parseWithValibot } from "../../../parse";
 import {
-  optionalAsync,
+  checkAsync,
   number,
   objectAsync,
+  optionalAsync,
+  pipeAsync,
   string,
   tupleWithRestAsync,
-  checkAsync,
-  pipeAsync,
 } from "valibot";
+import { describe, expect, test } from "vitest";
+import { parseWithValibot } from "../../../parse";
 import { createFormData } from "../../helpers/FormData";
 
 describe("tupleWithRestAsync", () => {

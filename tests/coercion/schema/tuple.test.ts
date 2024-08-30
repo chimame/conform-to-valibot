@@ -1,6 +1,6 @@
+import { check, number, object, pipe, string, tuple } from "valibot";
 import { describe, expect, test } from "vitest";
 import { parseWithValibot } from "../../../parse";
-import { number, object, string, tuple, check, pipe } from "valibot";
 import { createFormData } from "../../helpers/FormData";
 
 describe("tuple", () => {

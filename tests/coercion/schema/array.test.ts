@@ -1,6 +1,6 @@
+import { array, check, object, pipe, string } from "valibot";
 import { describe, expect, test } from "vitest";
 import { parseWithValibot } from "../../../parse";
-import { object, array, string, pipe, check } from "valibot";
 import { createFormData } from "../../helpers/FormData";
 
 describe("array", () => {

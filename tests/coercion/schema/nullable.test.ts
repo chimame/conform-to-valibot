@@ -1,13 +1,13 @@
-import { describe, expect, test } from "vitest";
 import {
-  string,
+  check,
+  nullable,
   number,
   object,
-  nullable,
   optional,
-  check,
   pipe,
+  string,
 } from "valibot";
+import { describe, expect, test } from "vitest";
 import { parseWithValibot } from "../../../parse";
 import { createFormData } from "../../helpers/FormData";
 

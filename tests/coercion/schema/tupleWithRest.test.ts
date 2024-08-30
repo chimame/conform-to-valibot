@@ -1,14 +1,14 @@
-import { describe, expect, test } from "vitest";
-import { parseWithValibot } from "../../../parse";
 import {
-  optional,
+  check,
   number,
   object,
+  optional,
+  pipe,
   string,
   tupleWithRest,
-  check,
-  pipe,
 } from "valibot";
+import { describe, expect, test } from "vitest";
+import { parseWithValibot } from "../../../parse";
 import { createFormData } from "../../helpers/FormData";
 
 describe("tupleWithRest", () => {

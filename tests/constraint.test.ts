@@ -1,26 +1,26 @@
-import { describe, test, expect } from "vitest";
 import {
-  check,
-  maxLength,
-  minLength,
-  object,
-  string,
-  number,
-  minValue,
-  maxValue,
-  date,
-  optional,
-  boolean,
   array,
+  boolean,
+  check,
+  date,
   enum_,
   instance,
   intersect,
-  union,
   literal,
-  tuple,
-  variant,
+  maxLength,
+  maxValue,
+  minLength,
+  minValue,
+  number,
+  object,
+  optional,
   pipe,
+  string,
+  tuple,
+  union,
+  variant,
 } from "valibot";
+import { describe, expect, test } from "vitest";
 import { getValibotConstraint } from "../constraint";
 
 enum TestEnum {

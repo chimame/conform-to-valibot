@@ -1,15 +1,15 @@
+import {
+  checkAsync,
+  nonOptionalAsync,
+  number,
+  objectAsync,
+  optionalAsync,
+  pipeAsync,
+  undefined_,
+  unionAsync,
+} from "valibot";
 import { describe, expect, test } from "vitest";
 import { parseWithValibot } from "../../../parse";
-import {
-  objectAsync,
-  number,
-  optionalAsync,
-  nonOptionalAsync,
-  unionAsync,
-  undefined_,
-  checkAsync,
-  pipeAsync,
-} from "valibot";
 import { createFormData } from "../../helpers/FormData";
 
 describe("nonOptionalAsync", () => {

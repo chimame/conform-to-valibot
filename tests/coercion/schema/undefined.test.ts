@@ -1,6 +1,6 @@
+import { object, string, undefined_ } from "valibot";
 import { describe, expect, test } from "vitest";
 import { parseWithValibot } from "../../../parse";
-import { object, undefined_, string } from "valibot";
 import { createFormData } from "../../helpers/FormData";
 
 describe("undefined", () => {

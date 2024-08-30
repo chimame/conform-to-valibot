@@ -1,16 +1,16 @@
 import {
   type Intent,
   type Submission,
-  formatPaths,
   parse as baseParse,
+  formatPaths,
 } from "@conform-to/dom";
 import {
   type BaseIssue,
-  type InferOutput,
   type Config,
-  type SafeParseResult,
   type GenericSchema,
   type GenericSchemaAsync,
+  type InferOutput,
+  type SafeParseResult,
   safeParse,
   safeParseAsync,
 } from "valibot";
