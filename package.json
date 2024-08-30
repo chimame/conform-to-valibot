@@ -44,7 +44,7 @@
     "@types/node": "^20.12.12",
     "semantic-release": "^22.0.8",
     "tsup": "^8.0.0",
-    "typescript": "^5.2.2",
+    "typescript": "^5.5.4",
     "valibot": "^0.34.0",
     "vitest": "2.0.5"
   }
