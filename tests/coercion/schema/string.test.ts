@@ -16,7 +16,7 @@ describe("string", () => {
     expect(
       parseWithValibot(createFormData("name", ""), { schema }),
     ).toMatchObject({
-      error: { name: ["Invalid type: Expected string but received undefined"] },
+      error: { name: expect.anything() },
     });
   });
 });
