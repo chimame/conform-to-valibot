@@ -273,6 +273,22 @@ export function enableTypeCoercion<
 
       return generateReturnSchema(type, objectSchema);
     }
+    case "object_with_rest": {
+      const objectWithRestSchema = {
+        ...originalSchema,
+        entries: Object.fromEntries(
+          // @ts-expect-error
+          Object.entries(originalSchema.entries).map(([key, def]) => [
+            key,
+            enableTypeCoercion(def as GenericSchema),
+          ]),
+        ),
+        // @ts-expect-error
+        rest: enableTypeCoercion(originalSchema.rest),
+      };
+
+      return generateReturnSchema(type, objectWithRestSchema);
+    }
   }
 
   return coerce(type);
