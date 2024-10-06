@@ -148,8 +148,8 @@ export function getValibotConstraint<
           // To escape unsafe characters on regex
           typeof option === "string"
             ? option
-              .replace(/[|\\{}()[\]^$+*?.]/g, "\\$&")
-              .replace(/-/g, "\\x2d")
+                .replace(/[|\\{}()[\]^$+*?.]/g, "\\$&")
+                .replace(/-/g, "\\x2d")
             : option,
         )
         .join("|");
