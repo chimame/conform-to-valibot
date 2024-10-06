@@ -120,6 +120,10 @@ export function getValibotConstraint<
       constraint.required = false;
       // @ts-expect-error
       updateConstraint(schema.wrapped, data, name);
+    } else if (schema.type === "nullish") {
+      constraint.required = false;
+      // @ts-expect-error
+      updateConstraint(schema.wrapped, data, name);
     } else if (schema.type === "number") {
       // @ts-expect-error
       const minValue = schema.pipe?.find(

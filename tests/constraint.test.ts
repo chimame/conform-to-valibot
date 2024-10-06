@@ -11,6 +11,7 @@ import {
   maxValue,
   minLength,
   minValue,
+  nullish,
   number,
   object,
   optional,
@@ -83,6 +84,7 @@ describe("constraint", () => {
           pipe(string(), minLength(3, "min")),
           optional(pipe(number(), maxValue(100, "max"))),
         ]),
+        nullishString: nullish(string()),
       }),
       check(() => false, "refine"),
     );
@@ -144,6 +146,9 @@ describe("constraint", () => {
       "tuple[1]": {
         required: false,
         max: 100,
+      },
+      nullishString: {
+        required: false,
       },
     };
 
