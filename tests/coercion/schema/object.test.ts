@@ -16,9 +16,11 @@ describe("object", () => {
 
     input1.append("key3", "");
     const output2 = parseWithValibot(input1, { schema: schema1 });
-    expect(output2).toMatchObject({
-      status: "success",
-      value: { key1: "test", key2: 123 },
+    expect(output2.status).toBe("success");
+    // @ts-expect-error
+    expect(output2.value).toStrictEqual({
+      key1: "test",
+      key2: 123,
     });
 
     const input2 = createFormData("key1", "");

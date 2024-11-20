@@ -259,6 +259,7 @@ export function enableTypeCoercion<
       };
       return generateReturnSchema(type, tupleWithRestSchema);
     }
+    case "loose_object":
     case "object": {
       const objectSchema = {
         ...originalSchema,

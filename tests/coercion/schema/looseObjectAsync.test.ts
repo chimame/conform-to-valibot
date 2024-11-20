@@ -1,8 +1,8 @@
 import {
   checkAsync,
   forwardAsync,
+  looseObjectAsync,
   number,
-  objectAsync,
   pipeAsync,
   string,
 } from "valibot";
@@ -10,9 +10,9 @@ import { describe, expect, test } from "vitest";
 import { parseWithValibot } from "../../../parse";
 import { createFormData } from "../../helpers/FormData";
 
-describe("objectAsync", () => {
-  test("should pass only objects", async () => {
-    const schema1 = objectAsync({ key1: string(), key2: number() });
+describe("looseObjectAsync", () => {
+  test("should pass only loose objects", async () => {
+    const schema1 = looseObjectAsync({ key1: string(), key2: number() });
     const input1 = createFormData("key1", "test");
     input1.append("key2", "123");
     const output1 = await parseWithValibot(input1, { schema: schema1 });
@@ -28,6 +28,7 @@ describe("objectAsync", () => {
     expect(output2.value).toStrictEqual({
       key1: "test",
       key2: 123,
+      key3: "",
     });
 
     const input2 = createFormData("key1", "");
@@ -51,7 +52,7 @@ describe("objectAsync", () => {
 
   test("should pass objects with pipe", async () => {
     const schema = pipeAsync(
-      objectAsync({
+      looseObjectAsync({
         key: string(),
       }),
       forwardAsync(
