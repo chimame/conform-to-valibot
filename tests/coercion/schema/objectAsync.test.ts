@@ -80,4 +80,27 @@ describe("objectAsync", () => {
       },
     });
   });
+
+  test("should fail with check on object", async () => {
+    const schema = pipeAsync(
+      objectAsync({
+        key1: string(),
+        key2: string(),
+      }),
+      checkAsync(({ key1, key2 }) => key1 === key2, "keys must match"),
+    );
+
+    const input = createFormData("key1", "foo");
+    input.append("key2", "bar");
+
+    const errorOutput = await parseWithValibot(input, {
+      schema,
+    });
+
+    expect(errorOutput).toMatchObject({
+      error: {
+        "": ["keys must match"],
+      },
+    });
+  });
 });
