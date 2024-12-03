@@ -70,4 +70,27 @@ describe("object", () => {
       },
     });
   });
+
+  test("should fail with check on object", () => {
+    const schema = pipe(
+      object({
+        key1: string(),
+        key2: string(),
+      }),
+      check(({ key1, key2 }) => key1 === key2, "keys must match"),
+    );
+
+    const input = createFormData("key1", "foo");
+    input.append("key2", "bar");
+
+    const errorOutput = parseWithValibot(input, {
+      schema,
+    });
+
+    expect(errorOutput).toMatchObject({
+      error: {
+        "": ["keys must match"],
+      },
+    });
+  });
 });

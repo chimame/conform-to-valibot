@@ -69,10 +69,10 @@ export function parseWithValibot<
 
         return {
           error: result.issues.reduce<Record<string, string[]>>((result, e) => {
-            const name = e.path
-              ? // @ts-expect-error
-                formatPaths(e.path.map((d) => d.key as string | number))
-              : (e.input as string | number);
+            const name = formatPaths(
+              // @ts-expect-error
+              e.path?.map((d) => d.key as string | number) ?? [],
+            );
 
             result[name] = [...(result[name] ?? []), e.message];
 
