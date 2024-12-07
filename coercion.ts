@@ -146,14 +146,19 @@ export function enableTypeCoercion<
         : SchemaWithPipeAsync<
             [T, ...PipeItem<unknown, unknown, BaseIssue<unknown>>[]]
           >),
-):
-  | ReturnType<typeof coerce>
-  | ReturnType<typeof generateReturnSchema>
-  | (T extends GenericSchema
-      ? SchemaWithPipe<[T, ...PipeItem<unknown, unknown, BaseIssue<unknown>>[]]>
-      : SchemaWithPipeAsync<
-          [T, ...PipeItem<unknown, unknown, BaseIssue<unknown>>[]]
-        >) {
+): {
+  coerced: boolean;
+  schema:
+    | ReturnType<typeof coerce>
+    | ReturnType<typeof generateReturnSchema>
+    | (T extends GenericSchema
+        ? SchemaWithPipe<
+            [T, ...PipeItem<unknown, unknown, BaseIssue<unknown>>[]]
+          >
+        : SchemaWithPipeAsync<
+            [T, ...PipeItem<unknown, unknown, BaseIssue<unknown>>[]]
+          >);
+} {
   const originalSchema = "pipe" in type ? type.pipe[0] : type;
 
   switch (type.type) {
@@ -161,38 +166,47 @@ export function enableTypeCoercion<
     case "literal":
     case "enum":
     case "undefined": {
-      return coerce(type);
+      return { coerced: true, schema: coerce(type) };
     }
     case "number": {
-      return coerce(type, Number);
+      return { coerced: true, schema: coerce(type, Number) };
     }
     case "boolean": {
-      return coerce(type, (text) => (text === "on" ? true : text));
+      return {
+        coerced: true,
+        schema: coerce(type, (text) => (text === "on" ? true : text)),
+      };
     }
     case "date": {
-      return coerce(type, (timestamp) => {
-        const date = new Date(timestamp);
-        if (Number.isNaN(date.getTime())) {
-          return timestamp;
-        }
+      return {
+        coerced: true,
+        schema: coerce(type, (timestamp) => {
+          const date = new Date(timestamp);
+          if (Number.isNaN(date.getTime())) {
+            return timestamp;
+          }
 
-        return date;
-      });
+          return date;
+        }),
+      };
     }
     case "bigint": {
-      return coerce(type, BigInt);
+      return { coerced: true, schema: coerce(type, BigInt) };
     }
     case "file":
     case "blob": {
-      return coerce(type);
+      return { coerced: true, schema: coerce(type) };
     }
     case "array": {
       const arraySchema = {
         ...originalSchema,
         // @ts-expect-error
-        item: enableTypeCoercion(originalSchema.item),
+        item: enableTypeCoercion(originalSchema.item).schema,
       };
-      return generateReturnSchema(type, arraySchema);
+      return {
+        coerced: false,
+        schema: generateReturnSchema(type, arraySchema),
+      };
     }
     case "optional":
     case "nullish":
@@ -201,63 +215,92 @@ export function enableTypeCoercion<
     case "non_nullish":
     case "non_nullable": {
       // @ts-expect-error
-      const wrapSchema = enableTypeCoercion(type.wrapped);
+      const { coerced, schema: wrapSchema } = enableTypeCoercion(type.wrapped);
 
-      if ("pipe" in wrapSchema) {
+      if (coerced) {
         // `expects` is required to generate error messages for `TupleSchema`, so it is passed to `UnkonwSchema` for coercion.
         const unknown = { ...valibotUnknown(), expects: type.expects };
         if (type.async) {
-          return pipeAsync(unknown, wrapSchema.pipe[1], type);
+          return {
+            coerced,
+            schema: pipeAsync(unknown, wrapSchema.pipe[1], type),
+          };
         }
-        return pipe(unknown, wrapSchema.pipe[1], type);
+        return {
+          coerced,
+          schema: pipe(unknown, wrapSchema.pipe[1], type),
+        };
       }
 
       const wrappedSchema = {
         ...originalSchema,
         // @ts-expect-error
-        wrapped: enableTypeCoercion(originalSchema.wrapped),
+        wrapped: enableTypeCoercion(originalSchema.wrapped).schema,
       };
 
-      return generateReturnSchema(type, wrappedSchema);
+      return {
+        coerced: false,
+        schema: generateReturnSchema(type, wrappedSchema),
+      };
     }
     case "union":
     case "intersect": {
       const unionSchema = {
         ...originalSchema,
         // @ts-expect-error
-        options: originalSchema.options.map((option) =>
-          enableTypeCoercion(option as GenericSchema),
+        options: originalSchema.options.map(
+          // @ts-expect-error
+          (option) => enableTypeCoercion(option as GenericSchema).schema,
         ),
       };
-      return generateReturnSchema(type, unionSchema);
+      return {
+        coerced: false,
+        schema: generateReturnSchema(type, unionSchema),
+      };
     }
     case "variant": {
       const variantSchema = {
         ...originalSchema,
         // @ts-expect-error
-        options: originalSchema.options.map((option) =>
-          enableTypeCoercion(option as GenericSchema),
+        options: originalSchema.options.map(
+          // @ts-expect-error
+          (option) => enableTypeCoercion(option as GenericSchema).schema,
         ),
       };
-      return generateReturnSchema(type, variantSchema);
+      return {
+        coerced: false,
+        schema: generateReturnSchema(type, variantSchema),
+      };
     }
     case "tuple": {
       const tupleSchema = {
         ...originalSchema,
         // @ts-expect-error
-        items: originalSchema.items.map((option) => enableTypeCoercion(option)),
+        items: originalSchema.items.map(
+          // @ts-expect-error
+          (option) => enableTypeCoercion(option).schema,
+        ),
       };
-      return generateReturnSchema(type, tupleSchema);
+      return {
+        coerced: false,
+        schema: generateReturnSchema(type, tupleSchema),
+      };
     }
     case "tuple_with_rest": {
       const tupleWithRestSchema = {
         ...originalSchema,
         // @ts-expect-error
-        items: originalSchema.items.map((option) => enableTypeCoercion(option)),
+        items: originalSchema.items.map(
+          // @ts-expect-error
+          (option) => enableTypeCoercion(option).schema,
+        ),
         // @ts-expect-error
-        rest: enableTypeCoercion(originalSchema.rest),
+        rest: enableTypeCoercion(originalSchema.rest).schema,
       };
-      return generateReturnSchema(type, tupleWithRestSchema);
+      return {
+        coerced: false,
+        schema: generateReturnSchema(type, tupleWithRestSchema),
+      };
     }
     case "loose_object":
     case "strict_object":
@@ -268,12 +311,15 @@ export function enableTypeCoercion<
           // @ts-expect-error
           Object.entries(originalSchema.entries).map(([key, def]) => [
             key,
-            enableTypeCoercion(def as GenericSchema),
+            enableTypeCoercion(def as GenericSchema).schema,
           ]),
         ),
       };
 
-      return generateReturnSchema(type, objectSchema);
+      return {
+        coerced: false,
+        schema: generateReturnSchema(type, objectSchema),
+      };
     }
     case "object_with_rest": {
       const objectWithRestSchema = {
@@ -282,16 +328,19 @@ export function enableTypeCoercion<
           // @ts-expect-error
           Object.entries(originalSchema.entries).map(([key, def]) => [
             key,
-            enableTypeCoercion(def as GenericSchema),
+            enableTypeCoercion(def as GenericSchema).schema,
           ]),
         ),
         // @ts-expect-error
-        rest: enableTypeCoercion(originalSchema.rest),
+        rest: enableTypeCoercion(originalSchema.rest).schema,
       };
 
-      return generateReturnSchema(type, objectWithRestSchema);
+      return {
+        coerced: false,
+        schema: generateReturnSchema(type, objectWithRestSchema),
+      };
     }
   }
 
-  return coerce(type);
+  return { coerced: true, schema: coerce(type) };
 }
