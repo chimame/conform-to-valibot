@@ -54,7 +54,7 @@ export function parseWithValibot<
         typeof config.schema === "function"
           ? config.schema(intent)
           : config.schema;
-      const schema = enableTypeCoercion(originalSchema);
+      const { schema } = enableTypeCoercion(originalSchema);
 
       const resolveResult = (
         result: SafeParseResult<Schema>,
