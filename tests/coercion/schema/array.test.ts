@@ -7,11 +7,18 @@ describe("array", () => {
   test("should pass only arrays", () => {
     const schema = object({ select: array(string()) });
     const formData = createFormData("select", "1");
+    const outputForNonArray = parseWithValibot(formData, { schema });
+
+    expect(outputForNonArray).toMatchObject({
+      status: "success",
+      value: { select: ["1"] },
+    });
+
     formData.append("select", "2");
     formData.append("select", "3");
-    const output = parseWithValibot(formData, { schema });
+    const outputForArray = parseWithValibot(formData, { schema });
 
-    expect(output).toMatchObject({
+    expect(outputForArray).toMatchObject({
       status: "success",
       value: { select: ["1", "2", "3"] },
     });

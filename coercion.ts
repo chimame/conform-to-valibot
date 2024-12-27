@@ -64,10 +64,39 @@ function coerce<T extends GenericSchema | GenericSchemaAsync>(
 }
 
 /**
+ * Helpers for coercing array value
+ * Modify the value only if it's an array, otherwise return the value as-is
+ */
+function coerceArray<T extends GenericSchema | GenericSchemaAsync>(type: T) {
+  // `expects` is required to generate error messages for `TupleSchema`, so it is passed to `UnkonwSchema` for coercion.
+  const unknown = { ...valibotUnknown(), expects: type.expects };
+  const transformFunction = (output: unknown): unknown => {
+    if (Array.isArray(output)) {
+      return output;
+    }
+
+    if (
+      typeof output === "undefined" ||
+      typeof coerceFile(coerceString(output)) === "undefined"
+    ) {
+      return [];
+    }
+
+    return [output];
+  };
+
+  if (type.async) {
+    return pipeAsync(unknown, vTransform(transformFunction), type);
+  }
+
+  return pipe(unknown, vTransform(transformFunction), type);
+}
+
+/**
  * Helpers for coercing file
  * Modify the value only if it's a file, otherwise return the value as-is
  */
-export function coerceFile(file: unknown) {
+function coerceFile(file: unknown) {
   if (
     typeof File !== "undefined" &&
     file instanceof File &&
@@ -205,7 +234,7 @@ export function enableTypeCoercion<
       };
       return {
         coerced: false,
-        schema: generateReturnSchema(type, arraySchema),
+        schema: generateReturnSchema(type, coerceArray(arraySchema)),
       };
     }
     case "optional":
