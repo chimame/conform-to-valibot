@@ -19,7 +19,7 @@ import { enableTypeCoercion } from "./coercion";
 export function parseWithValibot<Schema extends GenericSchema>(
   payload: FormData | URLSearchParams,
   config: {
-    schema: Schema | ((intent: string) => Schema);
+    schema: Schema | ((intent: Intent | null) => Schema);
     info?: Pick<
       Config<BaseIssue<unknown>>,
       "abortEarly" | "abortPipeEarly" | "lang"
@@ -29,7 +29,7 @@ export function parseWithValibot<Schema extends GenericSchema>(
 export function parseWithValibot<Schema extends GenericSchemaAsync>(
   payload: FormData | URLSearchParams,
   config: {
-    schema: Schema | ((intent: string) => Schema);
+    schema: Schema | ((intent: Intent | null) => Schema);
     info?: Pick<
       Config<BaseIssue<unknown>>,
       "abortEarly" | "abortPipeEarly" | "lang"
