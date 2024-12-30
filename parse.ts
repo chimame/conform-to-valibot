@@ -16,6 +16,13 @@ import {
 } from "valibot";
 import { enableTypeCoercion } from "./coercion";
 
+export const conformValibotMessage = {
+  VALIDATION_SKIPPED: "__skipped__",
+  VALIDATION_UNDEFINED: "__undefined__",
+};
+
+type ErrorType = Record<string, string[] | null> | null;
+
 export function parseWithValibot<Schema extends GenericSchema>(
   payload: FormData | URLSearchParams,
   config: {
@@ -58,9 +65,7 @@ export function parseWithValibot<
 
       const resolveResult = (
         result: SafeParseResult<Schema>,
-      ):
-        | { value: InferOutput<Schema> }
-        | { error: Record<string, string[]> } => {
+      ): { value: InferOutput<Schema> } | { error: ErrorType } => {
         if (result.success) {
           return {
             value: result.output,
@@ -68,13 +73,24 @@ export function parseWithValibot<
         }
 
         return {
-          error: result.issues.reduce<Record<string, string[]>>((result, e) => {
+          error: result.issues.reduce<ErrorType>((result, e) => {
+            if (
+              result === null ||
+              e.message === conformValibotMessage.VALIDATION_UNDEFINED
+            ) {
+              return null;
+            }
+
             const name = formatPaths(
               // @ts-expect-error
               e.path?.map((d) => d.key as string | number) ?? [],
             );
 
-            result[name] = [...(result[name] ?? []), e.message];
+            result[name] =
+              result[name] === null ||
+              e.message === conformValibotMessage.VALIDATION_SKIPPED
+                ? null
+                : [...(result[name] ?? []), e.message];
 
             return result;
           }, {}),
