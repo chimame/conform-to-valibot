@@ -82,7 +82,6 @@ export function parseWithValibot<
             }
 
             const name = formatPaths(
-              // @ts-expect-error
               e.path?.map((d) => d.key as string | number) ?? [],
             );
 

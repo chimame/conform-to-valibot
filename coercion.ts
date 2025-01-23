@@ -143,17 +143,10 @@ function generateReturnSchema<
 ) {
   if ("pipe" in originalSchema) {
     if (originalSchema.async && coercionSchema.async) {
-      return pipeAsync(
-        coercionSchema,
-        // @ts-expect-error
-        ...originalSchema.pipe.slice(1),
-      );
+      return pipeAsync(coercionSchema, ...originalSchema.pipe.slice(1));
     }
-    return pipe(
-      coercionSchema,
-      // @ts-expect-error
-      ...originalSchema.pipe.slice(1),
-    );
+    // @ts-expect-error
+    return pipe(coercionSchema, ...originalSchema.pipe.slice(1));
   }
 
   return coercionSchema;
@@ -235,6 +228,20 @@ export function enableTypeCoercion<
       return {
         coerced: false,
         schema: generateReturnSchema(type, coerceArray(arraySchema)),
+      };
+    }
+    case "exact_optional": {
+      // @ts-expect-error
+      const { schema: wrapSchema } = enableTypeCoercion(type.wrapped);
+
+      const exactOptionalSchema = {
+        ...type,
+        wrapped: wrapSchema,
+      };
+
+      return {
+        coerced: false,
+        schema: generateReturnSchema(type, exactOptionalSchema),
       };
     }
     case "optional":
