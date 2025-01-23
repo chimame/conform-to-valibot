@@ -244,6 +244,7 @@ export function enableTypeCoercion<
         schema: generateReturnSchema(type, exactOptionalSchema),
       };
     }
+    case "undefinedable":
     case "optional":
     case "nullish":
     case "nullable":
