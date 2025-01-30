@@ -5,7 +5,7 @@ import { createFormData } from "../../helpers/FormData";
 
 describe("nullish", () => {
   test("should pass also undefined", () => {
-    const schema = object({ age: nullish(number()) });
+    const schema = object({ name: nullish(string()), age: nullish(number()) });
     const output = parseWithValibot(createFormData("age", ""), { schema });
 
     expect(output).toMatchObject({

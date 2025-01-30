@@ -5,7 +5,10 @@ import { createFormData } from "../../helpers/FormData";
 
 describe("optional", () => {
   test("should pass also undefined", () => {
-    const schema = object({ age: optional(number()) });
+    const schema = object({
+      name: optional(string()),
+      age: optional(number()),
+    });
     const output = parseWithValibot(createFormData("age", ""), { schema });
 
     expect(output).toMatchObject({

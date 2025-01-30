@@ -12,7 +12,10 @@ import { createFormData } from "../../helpers/FormData";
 
 describe("nullishAsync", () => {
   test("should pass also undefined", async () => {
-    const schema = objectAsync({ age: nullishAsync(number()) });
+    const schema = objectAsync({
+      name: nullishAsync(string()),
+      age: nullishAsync(number()),
+    });
     const output = await parseWithValibot(createFormData("age", ""), {
       schema,
     });
