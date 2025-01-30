@@ -12,7 +12,10 @@ import { createFormData } from "../../helpers/FormData";
 
 describe("optionalAsync", () => {
   test("should pass also undefined", async () => {
-    const schema = objectAsync({ age: optionalAsync(number()) });
+    const schema = objectAsync({
+      name: optionalAsync(string()),
+      age: optionalAsync(number()),
+    });
     const output = await parseWithValibot(createFormData("age", ""), {
       schema,
     });

@@ -5,6 +5,10 @@ import {
   type PipeItem,
   type SchemaWithPipe,
   type SchemaWithPipeAsync,
+  nullish,
+  nullishAsync,
+  optional,
+  optionalAsync,
   pipe,
   pipeAsync,
   transform as vTransform,
@@ -153,6 +157,74 @@ function generateReturnSchema<
 }
 
 /**
+ * Generate a wrapped schema with coercion
+ * @param type The schema to be coerced
+ * @param originalSchema The original schema
+ * @param schemaType The schema type
+ * @returns The coerced schema
+ */
+function generateWrappedSchema<T extends GenericSchema | GenericSchemaAsync>(
+  type: T,
+  originalSchema: T,
+  schemaType?: "nullish" | "optional",
+) {
+  // @ts-expect-error
+  const { coerced, schema: wrapSchema } = enableTypeCoercion(type.wrapped);
+
+  if (coerced) {
+    // `expects` is required to generate error messages for `TupleSchema`, so it is passed to `UnkonwSchema` for coercion.
+    const unknown = { ...valibotUnknown(), expects: type.expects };
+    if (type.async) {
+      switch (schemaType) {
+        case "nullish":
+          return {
+            coerced: false,
+            schema: nullishAsync(pipeAsync(unknown, wrapSchema.pipe[1], type)),
+          };
+        case "optional":
+          return {
+            coerced: false,
+            schema: optionalAsync(pipeAsync(unknown, wrapSchema.pipe[1], type)),
+          };
+        default:
+          return {
+            coerced,
+            schema: pipeAsync(unknown, wrapSchema.pipe[1], type),
+          };
+      }
+    }
+    switch (schemaType) {
+      case "nullish":
+        return {
+          coerced: false,
+          schema: nullish(pipe(unknown, wrapSchema.pipe[1], type)),
+        };
+      case "optional":
+        return {
+          coerced: false,
+          schema: optional(pipe(unknown, wrapSchema.pipe[1], type)),
+        };
+      default:
+        return {
+          coerced,
+          schema: pipe(unknown, wrapSchema.pipe[1], type),
+        };
+    }
+  }
+
+  const wrappedSchema = {
+    ...originalSchema,
+    // @ts-expect-error
+    wrapped: enableTypeCoercion(originalSchema.wrapped).schema,
+  };
+
+  return {
+    coerced: false,
+    schema: generateReturnSchema(type, wrappedSchema),
+  };
+}
+
+/**
  * Reconstruct the provided schema with additional preprocessing steps
  * This coerce empty values to undefined and transform strings to the correct type
  */
@@ -244,41 +316,18 @@ export function enableTypeCoercion<
         schema: generateReturnSchema(type, exactOptionalSchema),
       };
     }
+    case "nullish": {
+      return generateWrappedSchema(type, originalSchema, type.type);
+    }
+    case "optional": {
+      return generateWrappedSchema(type, originalSchema, type.type);
+    }
     case "undefinedable":
-    case "optional":
-    case "nullish":
     case "nullable":
     case "non_optional":
     case "non_nullish":
     case "non_nullable": {
-      // @ts-expect-error
-      const { coerced, schema: wrapSchema } = enableTypeCoercion(type.wrapped);
-
-      if (coerced) {
-        // `expects` is required to generate error messages for `TupleSchema`, so it is passed to `UnkonwSchema` for coercion.
-        const unknown = { ...valibotUnknown(), expects: type.expects };
-        if (type.async) {
-          return {
-            coerced,
-            schema: pipeAsync(unknown, wrapSchema.pipe[1], type),
-          };
-        }
-        return {
-          coerced,
-          schema: pipe(unknown, wrapSchema.pipe[1], type),
-        };
-      }
-
-      const wrappedSchema = {
-        ...originalSchema,
-        // @ts-expect-error
-        wrapped: enableTypeCoercion(originalSchema.wrapped).schema,
-      };
-
-      return {
-        coerced: false,
-        schema: generateReturnSchema(type, wrappedSchema),
-      };
+      return generateWrappedSchema(type, originalSchema);
     }
     case "union":
     case "intersect": {
