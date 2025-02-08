@@ -253,7 +253,19 @@ export function enableTypeCoercion<
             [T, ...PipeItem<unknown, unknown, BaseIssue<unknown>>[]]
           >);
 } {
-  const originalSchema = "pipe" in type ? type.pipe[0] : type;
+  if ("pipe" in type) {
+    const { transformAction, schema: coercedSchema } = enableTypeCoercion(
+      type.pipe[0],
+    );
+    const schema = type.async
+      ? pipeAsync(coercedSchema, ...type.pipe.slice(1))
+      : // @ts-expect-error `coercedSchema` must be sync here but TypeScript can't infer that.
+        pipe(coercedSchema, ...type.pipe.slice(1));
+
+    return { transformAction, schema };
+  }
+
+  const originalSchema = type;
 
   switch (type.type) {
     case "string":
