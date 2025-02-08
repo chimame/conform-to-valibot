@@ -47,7 +47,7 @@ export function coerceString(
  * This coerce empty values to undefined and transform strings to the correct type
  * @param type The schema to be coerced
  * @param transform The transformation function
- * @returns The coerced schema
+ * @returns The transform action and the coerced schema
  */
 function coerce<T extends GenericSchema | GenericSchemaAsync>(
   type: T,
@@ -55,16 +55,16 @@ function coerce<T extends GenericSchema | GenericSchemaAsync>(
 ) {
   // `expects` is required to generate error messages for `TupleSchema`, so it is passed to `UnkonwSchema` for coercion.
   const unknown = { ...valibotUnknown(), expects: type.expects };
-  const transformFunction = (output: unknown) =>
+  const transformAction = vTransform((output: unknown) =>
     type.type === "blob" || type.type === "file"
       ? coerceFile(output)
-      : coerceString(output, transform);
+      : coerceString(output, transform),
+  );
+  const schema = type.async
+    ? pipeAsync(unknown, transformAction, type)
+    : pipe(unknown, transformAction, type);
 
-  if (type.async) {
-    return pipeAsync(unknown, vTransform(transformFunction), type);
-  }
-
-  return pipe(unknown, vTransform(transformFunction), type);
+  return { transformAction, schema };
 }
 
 /**
@@ -169,45 +169,45 @@ function generateWrappedSchema<T extends GenericSchema | GenericSchemaAsync>(
   schemaType?: "nullish" | "optional",
 ) {
   // @ts-expect-error
-  const { coerced, schema: wrapSchema } = enableTypeCoercion(type.wrapped);
+  const { transformAction } = enableTypeCoercion(type.wrapped);
 
-  if (coerced) {
+  if (transformAction) {
     // `expects` is required to generate error messages for `TupleSchema`, so it is passed to `UnkonwSchema` for coercion.
     const unknown = { ...valibotUnknown(), expects: type.expects };
     if (type.async) {
       switch (schemaType) {
         case "nullish":
           return {
-            coerced: false,
-            schema: nullishAsync(pipeAsync(unknown, wrapSchema.pipe[1], type)),
+            transformAction: undefined,
+            schema: nullishAsync(pipeAsync(unknown, transformAction, type)),
           };
         case "optional":
           return {
-            coerced: false,
-            schema: optionalAsync(pipeAsync(unknown, wrapSchema.pipe[1], type)),
+            transformAction: undefined,
+            schema: optionalAsync(pipeAsync(unknown, transformAction, type)),
           };
         default:
           return {
-            coerced,
-            schema: pipeAsync(unknown, wrapSchema.pipe[1], type),
+            transformAction,
+            schema: pipeAsync(unknown, transformAction, type),
           };
       }
     }
     switch (schemaType) {
       case "nullish":
         return {
-          coerced: false,
-          schema: nullish(pipe(unknown, wrapSchema.pipe[1], type)),
+          transformAction: undefined,
+          schema: nullish(pipe(unknown, transformAction, type)),
         };
       case "optional":
         return {
-          coerced: false,
-          schema: optional(pipe(unknown, wrapSchema.pipe[1], type)),
+          transformAction: undefined,
+          schema: optional(pipe(unknown, transformAction, type)),
         };
       default:
         return {
-          coerced,
-          schema: pipe(unknown, wrapSchema.pipe[1], type),
+          transformAction,
+          schema: pipe(unknown, transformAction, type),
         };
     }
   }
@@ -219,7 +219,7 @@ function generateWrappedSchema<T extends GenericSchema | GenericSchemaAsync>(
   };
 
   return {
-    coerced: false,
+    transformAction: undefined,
     schema: generateReturnSchema(type, wrappedSchema),
   };
 }
@@ -241,9 +241,9 @@ export function enableTypeCoercion<
             [T, ...PipeItem<unknown, unknown, BaseIssue<unknown>>[]]
           >),
 ): {
-  coerced: boolean;
+  transformAction: ReturnType<typeof coerce>["transformAction"] | undefined;
   schema:
-    | ReturnType<typeof coerce>
+    | ReturnType<typeof coerce>["schema"]
     | ReturnType<typeof generateReturnSchema>
     | (T extends GenericSchema
         ? SchemaWithPipe<
@@ -260,36 +260,30 @@ export function enableTypeCoercion<
     case "literal":
     case "enum":
     case "undefined": {
-      return { coerced: true, schema: coerce(type) };
+      return coerce(type);
     }
     case "number": {
-      return { coerced: true, schema: coerce(type, Number) };
+      return coerce(type, Number);
     }
     case "boolean": {
-      return {
-        coerced: true,
-        schema: coerce(type, (text) => (text === "on" ? true : text)),
-      };
+      return coerce(type, (text) => (text === "on" ? true : text));
     }
     case "date": {
-      return {
-        coerced: true,
-        schema: coerce(type, (timestamp) => {
-          const date = new Date(timestamp);
-          if (Number.isNaN(date.getTime())) {
-            return timestamp;
-          }
+      return coerce(type, (timestamp) => {
+        const date = new Date(timestamp);
+        if (Number.isNaN(date.getTime())) {
+          return timestamp;
+        }
 
-          return date;
-        }),
-      };
+        return date;
+      });
     }
     case "bigint": {
-      return { coerced: true, schema: coerce(type, BigInt) };
+      return coerce(type, BigInt);
     }
     case "file":
     case "blob": {
-      return { coerced: true, schema: coerce(type) };
+      return coerce(type);
     }
     case "array": {
       const arraySchema = {
@@ -298,7 +292,7 @@ export function enableTypeCoercion<
         item: enableTypeCoercion(originalSchema.item).schema,
       };
       return {
-        coerced: false,
+        transformAction: undefined,
         schema: generateReturnSchema(type, coerceArray(arraySchema)),
       };
     }
@@ -312,7 +306,7 @@ export function enableTypeCoercion<
       };
 
       return {
-        coerced: false,
+        transformAction: undefined,
         schema: generateReturnSchema(type, exactOptionalSchema),
       };
     }
@@ -340,7 +334,7 @@ export function enableTypeCoercion<
         ),
       };
       return {
-        coerced: false,
+        transformAction: undefined,
         schema: generateReturnSchema(type, unionSchema),
       };
     }
@@ -354,7 +348,7 @@ export function enableTypeCoercion<
         ),
       };
       return {
-        coerced: false,
+        transformAction: undefined,
         schema: generateReturnSchema(type, variantSchema),
       };
     }
@@ -368,7 +362,7 @@ export function enableTypeCoercion<
         ),
       };
       return {
-        coerced: false,
+        transformAction: undefined,
         schema: generateReturnSchema(type, tupleSchema),
       };
     }
@@ -384,7 +378,7 @@ export function enableTypeCoercion<
         rest: enableTypeCoercion(originalSchema.rest).schema,
       };
       return {
-        coerced: false,
+        transformAction: undefined,
         schema: generateReturnSchema(type, tupleWithRestSchema),
       };
     }
@@ -403,7 +397,7 @@ export function enableTypeCoercion<
       };
 
       return {
-        coerced: false,
+        transformAction: undefined,
         schema: generateReturnSchema(type, objectSchema),
       };
     }
@@ -422,11 +416,11 @@ export function enableTypeCoercion<
       };
 
       return {
-        coerced: false,
+        transformAction: undefined,
         schema: generateReturnSchema(type, objectWithRestSchema),
       };
     }
   }
 
-  return { coerced: true, schema: coerce(type) };
+  return coerce(type);
 }
