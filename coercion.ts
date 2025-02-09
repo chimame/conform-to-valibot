@@ -117,17 +117,17 @@ function coerceFile(file: unknown) {
 /**
  * Generate a wrapped schema with coercion
  * @param type The schema to be coerced
- * @param originalSchema The original schema
  * @param schemaType The schema type
  * @returns The coerced schema
  */
 function generateWrappedSchema<T extends GenericSchema | GenericSchemaAsync>(
   type: T,
-  originalSchema: T,
   schemaType?: "nullish" | "optional",
 ) {
-  // @ts-expect-error
-  const { transformAction } = enableTypeCoercion(type.wrapped);
+  const { transformAction, schema: wrapSchema } = enableTypeCoercion(
+    // @ts-expect-error
+    type.wrapped,
+  );
 
   if (transformAction) {
     // `expects` is required to generate error messages for `TupleSchema`, so it is passed to `UnkonwSchema` for coercion.
@@ -171,9 +171,8 @@ function generateWrappedSchema<T extends GenericSchema | GenericSchemaAsync>(
   }
 
   const wrappedSchema = {
-    ...originalSchema,
-    // @ts-expect-error
-    wrapped: enableTypeCoercion(originalSchema.wrapped).schema,
+    ...type,
+    wrapped: wrapSchema,
   };
 
   return {
@@ -228,8 +227,6 @@ export function enableTypeCoercion<
     return { transformAction, schema };
   }
 
-  const originalSchema = type;
-
   switch (type.type) {
     case "string":
     case "literal":
@@ -262,9 +259,9 @@ export function enableTypeCoercion<
     }
     case "array": {
       const arraySchema = {
-        ...originalSchema,
+        ...type,
         // @ts-expect-error
-        item: enableTypeCoercion(originalSchema.item).schema,
+        item: enableTypeCoercion(type.item).schema,
       };
       return {
         transformAction: undefined,
@@ -286,24 +283,24 @@ export function enableTypeCoercion<
       };
     }
     case "nullish": {
-      return generateWrappedSchema(type, originalSchema, type.type);
+      return generateWrappedSchema(type, type.type);
     }
     case "optional": {
-      return generateWrappedSchema(type, originalSchema, type.type);
+      return generateWrappedSchema(type, type.type);
     }
     case "undefinedable":
     case "nullable":
     case "non_optional":
     case "non_nullish":
     case "non_nullable": {
-      return generateWrappedSchema(type, originalSchema);
+      return generateWrappedSchema(type);
     }
     case "union":
     case "intersect": {
       const unionSchema = {
-        ...originalSchema,
+        ...type,
         // @ts-expect-error
-        options: originalSchema.options.map(
+        options: type.options.map(
           // @ts-expect-error
           (option) => enableTypeCoercion(option as GenericSchema).schema,
         ),
@@ -315,9 +312,9 @@ export function enableTypeCoercion<
     }
     case "variant": {
       const variantSchema = {
-        ...originalSchema,
+        ...type,
         // @ts-expect-error
-        options: originalSchema.options.map(
+        options: type.options.map(
           // @ts-expect-error
           (option) => enableTypeCoercion(option as GenericSchema).schema,
         ),
@@ -329,9 +326,9 @@ export function enableTypeCoercion<
     }
     case "tuple": {
       const tupleSchema = {
-        ...originalSchema,
+        ...type,
         // @ts-expect-error
-        items: originalSchema.items.map(
+        items: type.items.map(
           // @ts-expect-error
           (option) => enableTypeCoercion(option).schema,
         ),
@@ -343,14 +340,14 @@ export function enableTypeCoercion<
     }
     case "tuple_with_rest": {
       const tupleWithRestSchema = {
-        ...originalSchema,
+        ...type,
         // @ts-expect-error
-        items: originalSchema.items.map(
+        items: type.items.map(
           // @ts-expect-error
           (option) => enableTypeCoercion(option).schema,
         ),
         // @ts-expect-error
-        rest: enableTypeCoercion(originalSchema.rest).schema,
+        rest: enableTypeCoercion(type.rest).schema,
       };
       return {
         transformAction: undefined,
@@ -361,10 +358,10 @@ export function enableTypeCoercion<
     case "strict_object":
     case "object": {
       const objectSchema = {
-        ...originalSchema,
+        ...type,
         entries: Object.fromEntries(
           // @ts-expect-error
-          Object.entries(originalSchema.entries).map(([key, def]) => [
+          Object.entries(type.entries).map(([key, def]) => [
             key,
             enableTypeCoercion(def as GenericSchema).schema,
           ]),
@@ -378,16 +375,16 @@ export function enableTypeCoercion<
     }
     case "object_with_rest": {
       const objectWithRestSchema = {
-        ...originalSchema,
+        ...type,
         entries: Object.fromEntries(
           // @ts-expect-error
-          Object.entries(originalSchema.entries).map(([key, def]) => [
+          Object.entries(type.entries).map(([key, def]) => [
             key,
             enableTypeCoercion(def as GenericSchema).schema,
           ]),
         ),
         // @ts-expect-error
-        rest: enableTypeCoercion(originalSchema.rest).schema,
+        rest: enableTypeCoercion(type.rest).schema,
       };
 
       return {
