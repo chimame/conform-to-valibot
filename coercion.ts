@@ -6,10 +6,6 @@ import {
   type SchemaWithPipe,
   type SchemaWithPipeAsync,
   type TransformAction,
-  nullish,
-  nullishAsync,
-  optional,
-  optionalAsync,
   pipe,
   pipeAsync,
   transform as vTransform,
@@ -117,12 +113,13 @@ function coerceFile(file: unknown) {
 /**
  * Generate a wrapped schema with coercion
  * @param type The schema to be coerced
- * @param schemaType The schema type
+ * @param rewrap Whether the result schema should be rewrapped with the `type` schema.
+ *   See <https://github.com/chimame/conform-to-valibot/issues/53> for cases that need rewrapping.
  * @returns The coerced schema
  */
 function generateWrappedSchema<T extends GenericSchema | GenericSchemaAsync>(
   type: T,
-  schemaType?: "nullish" | "optional",
+  rewrap = false,
 ) {
   const { transformAction, schema: wrapSchema } = enableTypeCoercion(
     // @ts-expect-error
@@ -132,42 +129,18 @@ function generateWrappedSchema<T extends GenericSchema | GenericSchemaAsync>(
   if (transformAction) {
     // `expects` is required to generate error messages for `TupleSchema`, so it is passed to `UnkonwSchema` for coercion.
     const unknown = { ...valibotUnknown(), expects: type.expects };
-    if (type.async) {
-      switch (schemaType) {
-        case "nullish":
-          return {
-            transformAction: undefined,
-            schema: nullishAsync(pipeAsync(unknown, transformAction, type)),
-          };
-        case "optional":
-          return {
-            transformAction: undefined,
-            schema: optionalAsync(pipeAsync(unknown, transformAction, type)),
-          };
-        default:
-          return {
-            transformAction,
-            schema: pipeAsync(unknown, transformAction, type),
-          };
-      }
+    const schema = type.async
+      ? pipeAsync(unknown, transformAction, type)
+      : pipe(unknown, transformAction, type);
+
+    if (rewrap) {
+      return {
+        transformAction: undefined,
+        schema: type.reference(schema),
+      };
     }
-    switch (schemaType) {
-      case "nullish":
-        return {
-          transformAction: undefined,
-          schema: nullish(pipe(unknown, transformAction, type)),
-        };
-      case "optional":
-        return {
-          transformAction: undefined,
-          schema: optional(pipe(unknown, transformAction, type)),
-        };
-      default:
-        return {
-          transformAction,
-          schema: pipe(unknown, transformAction, type),
-        };
-    }
+
+    return { transformAction, schema };
   }
 
   const wrappedSchema = {
@@ -282,11 +255,9 @@ export function enableTypeCoercion<
         schema: exactOptionalSchema,
       };
     }
-    case "nullish": {
-      return generateWrappedSchema(type, type.type);
-    }
+    case "nullish":
     case "optional": {
-      return generateWrappedSchema(type, type.type);
+      return generateWrappedSchema(type, true);
     }
     case "undefinedable":
     case "nullable":
