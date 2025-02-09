@@ -3,6 +3,7 @@ import {
   isoDate,
   nullableAsync,
   number,
+  object,
   objectAsync,
   optionalAsync,
   pipeAsync,
@@ -84,6 +85,23 @@ describe("wrapAsync", () => {
       error: {
         "": ["key is not even"],
       },
+    });
+  });
+
+  test("should pass sync object with async pipe", async () => {
+    const schema = pipeAsync(
+      object({
+        key: string(),
+      }),
+      checkAsync(async ({ key }) => key !== "error name", "key is error"),
+    );
+
+    const output = await parseWithValibot(createFormData("key", "valid"), {
+      schema,
+    });
+    expect(output).toMatchObject({
+      status: "success",
+      value: { key: "valid" },
     });
   });
 });
