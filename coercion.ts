@@ -5,10 +5,7 @@ import {
   type PipeItem,
   type SchemaWithPipe,
   type SchemaWithPipeAsync,
-  nullish,
-  nullishAsync,
-  optional,
-  optionalAsync,
+  type TransformAction,
   pipe,
   pipeAsync,
   transform as vTransform,
@@ -47,7 +44,7 @@ export function coerceString(
  * This coerce empty values to undefined and transform strings to the correct type
  * @param type The schema to be coerced
  * @param transform The transformation function
- * @returns The coerced schema
+ * @returns The transform action and the coerced schema
  */
 function coerce<T extends GenericSchema | GenericSchemaAsync>(
   type: T,
@@ -55,16 +52,16 @@ function coerce<T extends GenericSchema | GenericSchemaAsync>(
 ) {
   // `expects` is required to generate error messages for `TupleSchema`, so it is passed to `UnkonwSchema` for coercion.
   const unknown = { ...valibotUnknown(), expects: type.expects };
-  const transformFunction = (output: unknown) =>
+  const transformAction = vTransform((output: unknown) =>
     type.type === "blob" || type.type === "file"
       ? coerceFile(output)
-      : coerceString(output, transform);
+      : coerceString(output, transform),
+  );
+  const schema = type.async
+    ? pipeAsync(unknown, transformAction, type)
+    : pipe(unknown, transformAction, type);
 
-  if (type.async) {
-    return pipeAsync(unknown, vTransform(transformFunction), type);
-  }
-
-  return pipe(unknown, vTransform(transformFunction), type);
+  return { transformAction, schema };
 }
 
 /**
@@ -114,113 +111,46 @@ function coerceFile(file: unknown) {
 }
 
 /**
- * If a pipe is assigned by referencing the original schema, convert it to assign the original pipe to the coerced schema.
- * @param originalSchema The original schema
- * @param coercionSchema The schema to be coerced
- * @returns The coerced schema with the original pipe
- */
-function generateReturnSchema<
-  T extends GenericSchema | GenericSchemaAsync,
-  E extends
-    | GenericSchema
-    | GenericSchemaAsync
-    | SchemaWithPipe<
-        [GenericSchema, ...PipeItem<unknown, unknown, BaseIssue<unknown>>[]]
-      >
-    | SchemaWithPipeAsync<
-        [
-          GenericSchema | GenericSchemaAsync,
-          ...PipeItem<unknown, unknown, BaseIssue<unknown>>[],
-        ]
-      >,
->(
-  originalSchema:
-    | T
-    | (T extends GenericSchema
-        ? SchemaWithPipe<
-            [T, ...PipeItem<unknown, unknown, BaseIssue<unknown>>[]]
-          >
-        : SchemaWithPipeAsync<
-            [T, ...PipeItem<unknown, unknown, BaseIssue<unknown>>[]]
-          >),
-  coercionSchema: E,
-) {
-  if ("pipe" in originalSchema) {
-    if (originalSchema.async && coercionSchema.async) {
-      return pipeAsync(coercionSchema, ...originalSchema.pipe.slice(1));
-    }
-    // @ts-expect-error
-    return pipe(coercionSchema, ...originalSchema.pipe.slice(1));
-  }
-
-  return coercionSchema;
-}
-
-/**
  * Generate a wrapped schema with coercion
  * @param type The schema to be coerced
- * @param originalSchema The original schema
- * @param schemaType The schema type
+ * @param rewrap Whether the result schema should be rewrapped with the `type` schema.
+ *   See <https://github.com/chimame/conform-to-valibot/issues/53> for cases that need rewrapping.
  * @returns The coerced schema
  */
 function generateWrappedSchema<T extends GenericSchema | GenericSchemaAsync>(
   type: T,
-  originalSchema: T,
-  schemaType?: "nullish" | "optional",
+  rewrap = false,
 ) {
-  // @ts-expect-error
-  const { coerced, schema: wrapSchema } = enableTypeCoercion(type.wrapped);
+  const { transformAction, schema: wrapSchema } = enableTypeCoercion(
+    // @ts-expect-error
+    type.wrapped,
+  );
 
-  if (coerced) {
+  if (transformAction) {
     // `expects` is required to generate error messages for `TupleSchema`, so it is passed to `UnkonwSchema` for coercion.
     const unknown = { ...valibotUnknown(), expects: type.expects };
-    if (type.async) {
-      switch (schemaType) {
-        case "nullish":
-          return {
-            coerced: false,
-            schema: nullishAsync(pipeAsync(unknown, wrapSchema.pipe[1], type)),
-          };
-        case "optional":
-          return {
-            coerced: false,
-            schema: optionalAsync(pipeAsync(unknown, wrapSchema.pipe[1], type)),
-          };
-        default:
-          return {
-            coerced,
-            schema: pipeAsync(unknown, wrapSchema.pipe[1], type),
-          };
-      }
+    const schema = type.async
+      ? pipeAsync(unknown, transformAction, type)
+      : pipe(unknown, transformAction, type);
+
+    if (rewrap) {
+      return {
+        transformAction: undefined,
+        schema: type.reference(schema),
+      };
     }
-    switch (schemaType) {
-      case "nullish":
-        return {
-          coerced: false,
-          schema: nullish(pipe(unknown, wrapSchema.pipe[1], type)),
-        };
-      case "optional":
-        return {
-          coerced: false,
-          schema: optional(pipe(unknown, wrapSchema.pipe[1], type)),
-        };
-      default:
-        return {
-          coerced,
-          schema: pipe(unknown, wrapSchema.pipe[1], type),
-        };
-    }
+
+    return { transformAction, schema };
   }
 
   const wrappedSchema = {
-    ...originalSchema,
-    // @ts-expect-error
-    wrapped: enableTypeCoercion(originalSchema.wrapped).schema,
+    ...type,
+    wrapped: wrapSchema,
   };
 
   return {
-    coerced: false,
-    schema: generateReturnSchema(type, wrappedSchema),
+    transformAction: undefined,
+    schema: wrappedSchema,
   };
 }
 
@@ -228,6 +158,20 @@ function generateWrappedSchema<T extends GenericSchema | GenericSchemaAsync>(
  * Reconstruct the provided schema with additional preprocessing steps
  * This coerce empty values to undefined and transform strings to the correct type
  */
+export function enableTypeCoercion<
+  T extends GenericSchema | GenericSchemaAsync,
+>(
+  type: T,
+): {
+  transformAction: TransformAction<unknown, unknown> | undefined;
+  // If we use just `T` for type of `schema`, `enabltTypeCoercion<GenericSchema<string, string>>` will return
+  // `GenericSchema<string, string>`. However, we want it to return `GenericSchema<unknown, string>`.
+  schema: T extends GenericSchema<unknown, infer Output, infer Issue>
+    ? GenericSchema<unknown, Output, Issue>
+    : T extends GenericSchemaAsync<unknown, infer OutputAsync, infer IssueAsync>
+      ? GenericSchemaAsync<unknown, OutputAsync, IssueAsync>
+      : never;
+};
 export function enableTypeCoercion<
   T extends GenericSchema | GenericSchemaAsync,
 >(
@@ -241,65 +185,60 @@ export function enableTypeCoercion<
             [T, ...PipeItem<unknown, unknown, BaseIssue<unknown>>[]]
           >),
 ): {
-  coerced: boolean;
-  schema:
-    | ReturnType<typeof coerce>
-    | ReturnType<typeof generateReturnSchema>
-    | (T extends GenericSchema
-        ? SchemaWithPipe<
-            [T, ...PipeItem<unknown, unknown, BaseIssue<unknown>>[]]
-          >
-        : SchemaWithPipeAsync<
-            [T, ...PipeItem<unknown, unknown, BaseIssue<unknown>>[]]
-          >);
+  transformAction: TransformAction<unknown, unknown> | undefined;
+  schema: GenericSchema | GenericSchemaAsync;
 } {
-  const originalSchema = "pipe" in type ? type.pipe[0] : type;
+  if ("pipe" in type) {
+    const { transformAction, schema: coercedSchema } = enableTypeCoercion(
+      type.pipe[0],
+    );
+    const schema = type.async
+      ? pipeAsync(coercedSchema, ...type.pipe.slice(1))
+      : // @ts-expect-error `coercedSchema` must be sync here but TypeScript can't infer that.
+        pipe(coercedSchema, ...type.pipe.slice(1));
+
+    return { transformAction, schema };
+  }
 
   switch (type.type) {
     case "string":
     case "literal":
     case "enum":
     case "undefined": {
-      return { coerced: true, schema: coerce(type) };
+      return coerce(type);
     }
     case "number": {
-      return { coerced: true, schema: coerce(type, Number) };
+      return coerce(type, Number);
     }
     case "boolean": {
-      return {
-        coerced: true,
-        schema: coerce(type, (text) => (text === "on" ? true : text)),
-      };
+      return coerce(type, (text) => (text === "on" ? true : text));
     }
     case "date": {
-      return {
-        coerced: true,
-        schema: coerce(type, (timestamp) => {
-          const date = new Date(timestamp);
-          if (Number.isNaN(date.getTime())) {
-            return timestamp;
-          }
+      return coerce(type, (timestamp) => {
+        const date = new Date(timestamp);
+        if (Number.isNaN(date.getTime())) {
+          return timestamp;
+        }
 
-          return date;
-        }),
-      };
+        return date;
+      });
     }
     case "bigint": {
-      return { coerced: true, schema: coerce(type, BigInt) };
+      return coerce(type, BigInt);
     }
     case "file":
     case "blob": {
-      return { coerced: true, schema: coerce(type) };
+      return coerce(type);
     }
     case "array": {
       const arraySchema = {
-        ...originalSchema,
+        ...type,
         // @ts-expect-error
-        item: enableTypeCoercion(originalSchema.item).schema,
+        item: enableTypeCoercion(type.item).schema,
       };
       return {
-        coerced: false,
-        schema: generateReturnSchema(type, coerceArray(arraySchema)),
+        transformAction: undefined,
+        schema: coerceArray(arraySchema),
       };
     }
     case "exact_optional": {
@@ -312,90 +251,88 @@ export function enableTypeCoercion<
       };
 
       return {
-        coerced: false,
-        schema: generateReturnSchema(type, exactOptionalSchema),
+        transformAction: undefined,
+        schema: exactOptionalSchema,
       };
     }
-    case "nullish": {
-      return generateWrappedSchema(type, originalSchema, type.type);
-    }
+    case "nullish":
     case "optional": {
-      return generateWrappedSchema(type, originalSchema, type.type);
+      return generateWrappedSchema(type, true);
     }
     case "undefinedable":
     case "nullable":
     case "non_optional":
     case "non_nullish":
     case "non_nullable": {
-      return generateWrappedSchema(type, originalSchema);
+      return generateWrappedSchema(type);
     }
     case "union":
     case "intersect": {
       const unionSchema = {
-        ...originalSchema,
+        ...type,
         // @ts-expect-error
-        options: originalSchema.options.map(
+        options: type.options.map(
           // @ts-expect-error
           (option) => enableTypeCoercion(option as GenericSchema).schema,
         ),
       };
       return {
-        coerced: false,
-        schema: generateReturnSchema(type, unionSchema),
+        transformAction: undefined,
+        schema: unionSchema,
       };
     }
     case "variant": {
       const variantSchema = {
-        ...originalSchema,
+        ...type,
         // @ts-expect-error
-        options: originalSchema.options.map(
+        options: type.options.map(
           // @ts-expect-error
           (option) => enableTypeCoercion(option as GenericSchema).schema,
         ),
       };
       return {
-        coerced: false,
-        schema: generateReturnSchema(type, variantSchema),
+        transformAction: undefined,
+        schema: variantSchema,
       };
     }
     case "tuple": {
       const tupleSchema = {
-        ...originalSchema,
+        ...type,
         // @ts-expect-error
-        items: originalSchema.items.map(
+        items: type.items.map(
           // @ts-expect-error
           (option) => enableTypeCoercion(option).schema,
         ),
       };
       return {
-        coerced: false,
-        schema: generateReturnSchema(type, tupleSchema),
+        transformAction: undefined,
+        schema: tupleSchema,
       };
     }
     case "tuple_with_rest": {
       const tupleWithRestSchema = {
-        ...originalSchema,
+        ...type,
         // @ts-expect-error
-        items: originalSchema.items.map(
+        items: type.items.map(
           // @ts-expect-error
           (option) => enableTypeCoercion(option).schema,
         ),
         // @ts-expect-error
-        rest: enableTypeCoercion(originalSchema.rest).schema,
+        rest: enableTypeCoercion(type.rest).schema,
       };
       return {
-        coerced: false,
-        schema: generateReturnSchema(type, tupleWithRestSchema),
+        transformAction: undefined,
+        schema: tupleWithRestSchema,
       };
     }
     case "loose_object":
     case "strict_object":
     case "object": {
       const objectSchema = {
-        ...originalSchema,
+        ...type,
         entries: Object.fromEntries(
           // @ts-expect-error
-          Object.entries(originalSchema.entries).map(([key, def]) => [
+          Object.entries(type.entries).map(([key, def]) => [
             key,
             enableTypeCoercion(def as GenericSchema).schema,
           ]),
@@ -403,30 +340,30 @@ export function enableTypeCoercion<
       };
 
       return {
-        coerced: false,
-        schema: generateReturnSchema(type, objectSchema),
+        transformAction: undefined,
+        schema: objectSchema,
       };
     }
     case "object_with_rest": {
       const objectWithRestSchema = {
-        ...originalSchema,
+        ...type,
         entries: Object.fromEntries(
           // @ts-expect-error
-          Object.entries(originalSchema.entries).map(([key, def]) => [
+          Object.entries(type.entries).map(([key, def]) => [
             key,
             enableTypeCoercion(def as GenericSchema).schema,
           ]),
         ),
         // @ts-expect-error
-        rest: enableTypeCoercion(originalSchema.rest).schema,
+        rest: enableTypeCoercion(type.rest).schema,
       };
 
       return {
-        coerced: false,
-        schema: generateReturnSchema(type, objectWithRestSchema),
+        transformAction: undefined,
+        schema: objectWithRestSchema,
       };
     }
   }
 
-  return { coerced: true, schema: coerce(type) };
+  return coerce(type);
 }

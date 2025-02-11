@@ -2,6 +2,8 @@ import {
   checkAsync,
   isoDate,
   nullableAsync,
+  number,
+  object,
   objectAsync,
   optionalAsync,
   pipeAsync,
@@ -45,6 +47,61 @@ describe("wrapAsync", () => {
     expect(output).toMatchObject({
       status: "success",
       value: { key1: "valid", key2: {} },
+    });
+  });
+
+  test("should pass with directly nested pipe object", async () => {
+    const schema = pipeAsync(
+      pipeAsync(
+        objectAsync({
+          key: number(),
+        }),
+        checkAsync(({ key }) => key > 0, "key is not positive"),
+      ),
+      checkAsync(({ key }) => key % 2 === 0, "key is not even"),
+    );
+
+    const output = await parseWithValibot(createFormData("key", "2"), {
+      schema,
+    });
+    expect(output).toMatchObject({
+      status: "success",
+      value: { key: 2 },
+    });
+
+    const errorOutput1 = await parseWithValibot(createFormData("key", "-2"), {
+      schema,
+    });
+    expect(errorOutput1).toMatchObject({
+      error: {
+        "": ["key is not positive"],
+      },
+    });
+
+    const errorOutput2 = await parseWithValibot(createFormData("key", "1"), {
+      schema,
+    });
+    expect(errorOutput2).toMatchObject({
+      error: {
+        "": ["key is not even"],
+      },
+    });
+  });
+
+  test("should pass sync object with async pipe", async () => {
+    const schema = pipeAsync(
+      object({
+        key: string(),
+      }),
+      checkAsync(async ({ key }) => key !== "error name", "key is error"),
+    );
+
+    const output = await parseWithValibot(createFormData("key", "valid"), {
+      schema,
+    });
+    expect(output).toMatchObject({
+      status: "success",
+      value: { key: "valid" },
     });
   });
 });

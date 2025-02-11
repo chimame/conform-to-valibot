@@ -2,6 +2,7 @@ import {
   check,
   isoDate,
   nullable,
+  number,
   object,
   optional,
   pipe,
@@ -41,6 +42,44 @@ describe("wrap", () => {
     expect(output).toMatchObject({
       status: "success",
       value: { key1: "valid", key2: {} },
+    });
+  });
+
+  test("should pass with directly nested pipe object", () => {
+    const schema = pipe(
+      pipe(
+        object({
+          key: number(),
+        }),
+        check(({ key }) => key > 0, "key is not positive"),
+      ),
+      check(({ key }) => key % 2 === 0, "key is not even"),
+    );
+
+    const output = parseWithValibot(createFormData("key", "2"), {
+      schema,
+    });
+    expect(output).toMatchObject({
+      status: "success",
+      value: { key: 2 },
+    });
+
+    const errorOutput1 = parseWithValibot(createFormData("key", "-2"), {
+      schema,
+    });
+    expect(errorOutput1).toMatchObject({
+      error: {
+        "": ["key is not positive"],
+      },
+    });
+
+    const errorOutput2 = parseWithValibot(createFormData("key", "1"), {
+      schema,
+    });
+    expect(errorOutput2).toMatchObject({
+      error: {
+        "": ["key is not even"],
+      },
     });
   });
 });
