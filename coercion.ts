@@ -121,7 +121,7 @@ function generateWrappedSchema<T extends GenericSchema | GenericSchemaAsync>(
   type: T,
   rewrap = false,
 ) {
-  const { transformAction, schema: wrapSchema } = enableTypeCoercion(
+  const { transformAction, schema: wrapSchema } = valibotFormValue(
     // @ts-expect-error
     type.wrapped,
   );
@@ -158,9 +158,7 @@ function generateWrappedSchema<T extends GenericSchema | GenericSchemaAsync>(
  * Reconstruct the provided schema with additional preprocessing steps
  * This coerce empty values to undefined and transform strings to the correct type
  */
-export function enableTypeCoercion<
-  T extends GenericSchema | GenericSchemaAsync,
->(
+export function valibotFormValue<T extends GenericSchema | GenericSchemaAsync>(
   type: T,
 ): {
   transformAction: TransformAction<unknown, unknown> | undefined;
@@ -172,9 +170,7 @@ export function enableTypeCoercion<
       ? GenericSchemaAsync<unknown, OutputAsync, IssueAsync>
       : never;
 };
-export function enableTypeCoercion<
-  T extends GenericSchema | GenericSchemaAsync,
->(
+export function valibotFormValue<T extends GenericSchema | GenericSchemaAsync>(
   type:
     | T
     | (T extends GenericSchema
@@ -189,7 +185,7 @@ export function enableTypeCoercion<
   schema: GenericSchema | GenericSchemaAsync;
 } {
   if ("pipe" in type) {
-    const { transformAction, schema: coercedSchema } = enableTypeCoercion(
+    const { transformAction, schema: coercedSchema } = valibotFormValue(
       type.pipe[0],
     );
     const schema = type.async
@@ -234,7 +230,7 @@ export function enableTypeCoercion<
       const arraySchema = {
         ...type,
         // @ts-expect-error
-        item: enableTypeCoercion(type.item).schema,
+        item: valibotFormValue(type.item).schema,
       };
       return {
         transformAction: undefined,
@@ -243,7 +239,7 @@ export function enableTypeCoercion<
     }
     case "exact_optional": {
       // @ts-expect-error
-      const { schema: wrapSchema } = enableTypeCoercion(type.wrapped);
+      const { schema: wrapSchema } = valibotFormValue(type.wrapped);
 
       const exactOptionalSchema = {
         ...type,
@@ -273,7 +269,7 @@ export function enableTypeCoercion<
         // @ts-expect-error
         options: type.options.map(
           // @ts-expect-error
-          (option) => enableTypeCoercion(option as GenericSchema).schema,
+          (option) => valibotFormValue(option as GenericSchema).schema,
         ),
       };
       return {
@@ -287,7 +283,7 @@ export function enableTypeCoercion<
         // @ts-expect-error
         options: type.options.map(
           // @ts-expect-error
-          (option) => enableTypeCoercion(option as GenericSchema).schema,
+          (option) => valibotFormValue(option as GenericSchema).schema,
         ),
       };
       return {
@@ -301,7 +297,7 @@ export function enableTypeCoercion<
         // @ts-expect-error
         items: type.items.map(
           // @ts-expect-error
-          (option) => enableTypeCoercion(option).schema,
+          (option) => valibotFormValue(option).schema,
         ),
       };
       return {
@@ -315,10 +311,10 @@ export function enableTypeCoercion<
         // @ts-expect-error
         items: type.items.map(
           // @ts-expect-error
-          (option) => enableTypeCoercion(option).schema,
+          (option) => valibotFormValue(option).schema,
         ),
         // @ts-expect-error
-        rest: enableTypeCoercion(type.rest).schema,
+        rest: valibotFormValue(type.rest).schema,
       };
       return {
         transformAction: undefined,
@@ -334,7 +330,7 @@ export function enableTypeCoercion<
           // @ts-expect-error
           Object.entries(type.entries).map(([key, def]) => [
             key,
-            enableTypeCoercion(def as GenericSchema).schema,
+            valibotFormValue(def as GenericSchema).schema,
           ]),
         ),
       };
@@ -351,11 +347,11 @@ export function enableTypeCoercion<
           // @ts-expect-error
           Object.entries(type.entries).map(([key, def]) => [
             key,
-            enableTypeCoercion(def as GenericSchema).schema,
+            valibotFormValue(def as GenericSchema).schema,
           ]),
         ),
         // @ts-expect-error
-        rest: enableTypeCoercion(type.rest).schema,
+        rest: valibotFormValue(type.rest).schema,
       };
 
       return {

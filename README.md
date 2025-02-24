@@ -173,6 +173,34 @@ function ExampleForm() {
 }
 ```
 
+By default, `parseWithValibot` will strip empty value and coerce form data to the correct type by introspecting the schema and inject extra preprocessing steps using the `valibotFormValue` helper internally.
+If you want to customize this behavior, you can disable automatic type coercion by setting `options.disableAutoCoercion` to `true` and manage it yourself.
+
+```ts
+import { useForm } from '@conform-to/react';
+import { parseWithValibot, unstable_valibotFormValue as valibotFormValue } from 'conform-to-valibot';
+import { pipe, transform, unknown, object, string } from 'valibot';
+
+// `parseWithValibot` implicitly performs the following forced conversion:
+const schema = object({
+  name: pipe(unknown(), transform(v => v === "" ? undefined ? v), string('Name is required' )),
+  age: pipe(unknown(), transform(v => Number(v)), number('Age is required number' )),
+});
+
+function ExampleForm() {
+  const [form, { email, password }] = useForm({
+    onValidate({ formData }) {
+      return parseWithValibot(formData, {
+        schema,
+        disableAutoCoercion: true
+      });
+    },
+  });
+
+  // ...
+}
+```
+
 ### getValibotConstraint
 
 A helper that returns an object containing the validation attributes for each field by introspecting the valibot schema.

@@ -14,7 +14,7 @@ import {
   safeParse,
   safeParseAsync,
 } from "valibot";
-import { enableTypeCoercion } from "./coercion";
+import { valibotFormValue } from "./coercion";
 
 export const conformValibotMessage = {
   VALIDATION_SKIPPED: "__skipped__",
@@ -31,6 +31,7 @@ export function parseWithValibot<Schema extends GenericSchema>(
       Config<BaseIssue<unknown>>,
       "abortEarly" | "abortPipeEarly" | "lang"
     >;
+    disableAutoCoercion?: boolean;
   },
 ): Submission<InferOutput<Schema>>;
 export function parseWithValibot<Schema extends GenericSchemaAsync>(
@@ -41,6 +42,7 @@ export function parseWithValibot<Schema extends GenericSchemaAsync>(
       Config<BaseIssue<unknown>>,
       "abortEarly" | "abortPipeEarly" | "lang"
     >;
+    disableAutoCoercion?: boolean;
   },
 ): Promise<Submission<InferOutput<Schema>>>;
 export function parseWithValibot<
@@ -53,15 +55,18 @@ export function parseWithValibot<
       Config<BaseIssue<unknown>>,
       "abortEarly" | "abortPipeEarly" | "lang"
     >;
+    disableAutoCoercion?: boolean;
   },
 ): Submission<InferOutput<Schema>> | Promise<Submission<InferOutput<Schema>>> {
   return baseParse<InferOutput<Schema>, string[]>(payload, {
     resolve(payload, intent) {
-      const originalSchema =
+      const baseSchema =
         typeof config.schema === "function"
           ? config.schema(intent)
           : config.schema;
-      const { schema } = enableTypeCoercion(originalSchema);
+      const schema = !config.disableAutoCoercion
+        ? valibotFormValue(baseSchema).schema
+        : baseSchema;
 
       const resolveResult = (
         result: SafeParseResult<Schema>,
