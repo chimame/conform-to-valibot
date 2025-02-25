@@ -14,7 +14,7 @@ import {
   safeParse,
   safeParseAsync,
 } from "valibot";
-import { valibotFormValue } from "./coercion";
+import { coerceFormValue } from "./coercion";
 
 export const conformValibotMessage = {
   VALIDATION_SKIPPED: "__skipped__",
@@ -65,7 +65,7 @@ export function parseWithValibot<
           ? config.schema(intent)
           : config.schema;
       const schema = !config.disableAutoCoercion
-        ? valibotFormValue(baseSchema).schema
+        ? coerceFormValue(baseSchema).schema
         : baseSchema;
 
       const resolveResult = (

@@ -121,7 +121,7 @@ function generateWrappedSchema<T extends GenericSchema | GenericSchemaAsync>(
   type: T,
   rewrap = false,
 ) {
-  const { transformAction, schema: wrapSchema } = valibotFormValue(
+  const { transformAction, schema: wrapSchema } = coerceFormValue(
     // @ts-expect-error
     type.wrapped,
   );
@@ -158,7 +158,7 @@ function generateWrappedSchema<T extends GenericSchema | GenericSchemaAsync>(
  * Reconstruct the provided schema with additional preprocessing steps
  * This coerce empty values to undefined and transform strings to the correct type
  */
-export function valibotFormValue<T extends GenericSchema | GenericSchemaAsync>(
+export function coerceFormValue<T extends GenericSchema | GenericSchemaAsync>(
   type: T,
 ): {
   transformAction: TransformAction<unknown, unknown> | undefined;
@@ -170,7 +170,7 @@ export function valibotFormValue<T extends GenericSchema | GenericSchemaAsync>(
       ? GenericSchemaAsync<unknown, OutputAsync, IssueAsync>
       : never;
 };
-export function valibotFormValue<T extends GenericSchema | GenericSchemaAsync>(
+export function coerceFormValue<T extends GenericSchema | GenericSchemaAsync>(
   type:
     | T
     | (T extends GenericSchema
@@ -185,7 +185,7 @@ export function valibotFormValue<T extends GenericSchema | GenericSchemaAsync>(
   schema: GenericSchema | GenericSchemaAsync;
 } {
   if ("pipe" in type) {
-    const { transformAction, schema: coercedSchema } = valibotFormValue(
+    const { transformAction, schema: coercedSchema } = coerceFormValue(
       type.pipe[0],
     );
     const schema = type.async
@@ -230,7 +230,7 @@ export function valibotFormValue<T extends GenericSchema | GenericSchemaAsync>(
       const arraySchema = {
         ...type,
         // @ts-expect-error
-        item: valibotFormValue(type.item).schema,
+        item: coerceFormValue(type.item).schema,
       };
       return {
         transformAction: undefined,
@@ -239,7 +239,7 @@ export function valibotFormValue<T extends GenericSchema | GenericSchemaAsync>(
     }
     case "exact_optional": {
       // @ts-expect-error
-      const { schema: wrapSchema } = valibotFormValue(type.wrapped);
+      const { schema: wrapSchema } = coerceFormValue(type.wrapped);
 
       const exactOptionalSchema = {
         ...type,
@@ -269,7 +269,7 @@ export function valibotFormValue<T extends GenericSchema | GenericSchemaAsync>(
         // @ts-expect-error
         options: type.options.map(
           // @ts-expect-error
-          (option) => valibotFormValue(option as GenericSchema).schema,
+          (option) => coerceFormValue(option as GenericSchema).schema,
         ),
       };
       return {
@@ -283,7 +283,7 @@ export function valibotFormValue<T extends GenericSchema | GenericSchemaAsync>(
         // @ts-expect-error
         options: type.options.map(
           // @ts-expect-error
-          (option) => valibotFormValue(option as GenericSchema).schema,
+          (option) => coerceFormValue(option as GenericSchema).schema,
         ),
       };
       return {
@@ -297,7 +297,7 @@ export function valibotFormValue<T extends GenericSchema | GenericSchemaAsync>(
         // @ts-expect-error
         items: type.items.map(
           // @ts-expect-error
-          (option) => valibotFormValue(option).schema,
+          (option) => coerceFormValue(option).schema,
         ),
       };
       return {
@@ -311,10 +311,10 @@ export function valibotFormValue<T extends GenericSchema | GenericSchemaAsync>(
         // @ts-expect-error
         items: type.items.map(
           // @ts-expect-error
-          (option) => valibotFormValue(option).schema,
+          (option) => coerceFormValue(option).schema,
         ),
         // @ts-expect-error
-        rest: valibotFormValue(type.rest).schema,
+        rest: coerceFormValue(type.rest).schema,
       };
       return {
         transformAction: undefined,
@@ -330,7 +330,7 @@ export function valibotFormValue<T extends GenericSchema | GenericSchemaAsync>(
           // @ts-expect-error
           Object.entries(type.entries).map(([key, def]) => [
             key,
-            valibotFormValue(def as GenericSchema).schema,
+            coerceFormValue(def as GenericSchema).schema,
           ]),
         ),
       };
@@ -347,11 +347,11 @@ export function valibotFormValue<T extends GenericSchema | GenericSchemaAsync>(
           // @ts-expect-error
           Object.entries(type.entries).map(([key, def]) => [
             key,
-            valibotFormValue(def as GenericSchema).schema,
+            coerceFormValue(def as GenericSchema).schema,
           ]),
         ),
         // @ts-expect-error
-        rest: valibotFormValue(type.rest).schema,
+        rest: coerceFormValue(type.rest).schema,
       };
 
       return {
