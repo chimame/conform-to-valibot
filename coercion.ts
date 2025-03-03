@@ -133,10 +133,11 @@ function generateWrappedSchema<T extends GenericSchema | GenericSchemaAsync>(
       ? pipeAsync(unknown, transformAction, type)
       : pipe(unknown, transformAction, type);
 
+    const default_ = "default" in type ? type.default : undefined;
     if (rewrap) {
       return {
         transformAction: undefined,
-        schema: type.reference(schema),
+        schema: type.reference(schema, default_),
       };
     }
 
