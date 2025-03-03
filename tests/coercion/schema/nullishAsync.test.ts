@@ -94,5 +94,16 @@ describe("nullishAsync", () => {
       status: "success",
       value: { name: "default" },
     });
+
+    const schema3 = objectAsync({
+      name: nullishAsync(string(), () => default_),
+    });
+    const output3 = await parseWithValibot(createFormData("age", "30"), {
+      schema: schema3,
+    });
+    expect(output3).toMatchObject({
+      status: "success",
+      value: { name: "default" },
+    });
   });
 });
