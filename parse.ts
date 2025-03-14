@@ -27,22 +27,22 @@ export function parseWithValibot<Schema extends GenericSchema>(
   payload: FormData | URLSearchParams,
   config: {
     schema: Schema | ((intent: Intent | null) => Schema);
+    disableAutoCoercion?: boolean;
     info?: Pick<
       Config<BaseIssue<unknown>>,
       "abortEarly" | "abortPipeEarly" | "lang"
     >;
-    disableAutoCoercion?: boolean;
   },
 ): Submission<InferOutput<Schema>>;
 export function parseWithValibot<Schema extends GenericSchemaAsync>(
   payload: FormData | URLSearchParams,
   config: {
     schema: Schema | ((intent: Intent | null) => Schema);
+    disableAutoCoercion?: boolean;
     info?: Pick<
       Config<BaseIssue<unknown>>,
       "abortEarly" | "abortPipeEarly" | "lang"
     >;
-    disableAutoCoercion?: boolean;
   },
 ): Promise<Submission<InferOutput<Schema>>>;
 export function parseWithValibot<
@@ -51,11 +51,11 @@ export function parseWithValibot<
   payload: FormData | URLSearchParams,
   config: {
     schema: Schema | ((intent: Intent | null) => Schema);
+    disableAutoCoercion?: boolean;
     info?: Pick<
       Config<BaseIssue<unknown>>,
       "abortEarly" | "abortPipeEarly" | "lang"
     >;
-    disableAutoCoercion?: boolean;
   },
 ): Submission<InferOutput<Schema>> | Promise<Submission<InferOutput<Schema>>> {
   return baseParse<InferOutput<Schema>, string[]>(payload, {
@@ -64,9 +64,9 @@ export function parseWithValibot<
         typeof config.schema === "function"
           ? config.schema(intent)
           : config.schema;
-      const schema = !config.disableAutoCoercion
-        ? coerceFormValue(baseSchema).schema
-        : baseSchema;
+      const schema = config.disableAutoCoercion
+        ? baseSchema
+        : coerceFormValue(baseSchema);
 
       const resolveResult = (
         result: SafeParseResult<Schema>,
