@@ -276,7 +276,7 @@ const schema = coerceFormValue(
       // Disable coercion for `boolean()`
       boolean: false,
     },
-    defineCoercion(schema) {
+    customize(schema) {
       // Customize how the `metadata` field value is coerced
       if (schema === metadata) {
         return (value) => {
