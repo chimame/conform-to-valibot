@@ -3,7 +3,16 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![npm version](https://badge.fury.io/js/conform-to-valibot.svg)](https://badge.fury.io/js/conform-to-valibot)
 
-> [Conform](https://github.com/edmundhung/conform) helpers for integrating with [Valibot](https://github.com/fabian-hiller/valibot)
+> [!WARNING]  
+> The official valibot support [library](https://www.npmjs.com/package/@conform-to/valibot) based on this library has been released. This project will be archived in the near future.
+> To migrate, just install the official library( `npm install @conform-to/valibot` ) and change the reference.
+
+```diff
+- import { parseWithValibot } from 'conform-to-valibot';
++ import { parseWithValibot } from '@conform-to/valibot';
+```
+
+[Conform](https://github.com/edmundhung/conform) helpers for integrating with [Valibot](https://github.com/fabian-hiller/valibot)
 
 <!-- aside -->
 
