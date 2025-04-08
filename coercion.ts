@@ -12,32 +12,22 @@ import {
   unknown as valibotUnknown,
 } from "valibot";
 
-/**
- * Helpers for coercing string value
- * Modify the value only if it's a string, otherwise return the value as-is
- */
-export function coerceString(
-  value: unknown,
-  transform?: (text: string) => unknown,
-) {
-  if (typeof value !== "string") {
-    return value;
-  }
+export type CoercionFunction = (value: unknown) => unknown;
 
-  if (value === "") {
-    return undefined;
-  }
+export type DefaultCoercionType =
+  | "string"
+  | "file"
+  | "number"
+  | "boolean"
+  | "date"
+  | "bigint";
 
-  if (typeof transform !== "function") {
-    return value;
-  }
-
-  try {
-    return transform(value);
-  } catch {
-    return undefined;
-  }
-}
+type EnableTypeCoercionOptions = {
+  defaultCoercion: Record<DefaultCoercionType, CoercionFunction>;
+  customize: (
+    type: GenericSchema | GenericSchemaAsync,
+  ) => CoercionFunction | null;
+};
 
 /**
  * Reconstruct the provided schema with additional preprocessing steps
@@ -48,20 +38,114 @@ export function coerceString(
  */
 function coerce<T extends GenericSchema | GenericSchemaAsync>(
   type: T,
-  transform?: (text: string) => unknown,
+  transformFn: CoercionFunction,
 ) {
-  // `expects` is required to generate error messages for `TupleSchema`, so it is passed to `UnkonwSchema` for coercion.
+  // `expects` is required to generate error messages for `TupleSchema`, so it is passed to `UnknownSchema` for coercion.
   const unknown = { ...valibotUnknown(), expects: type.expects };
-  const transformAction = vTransform((output: unknown) =>
-    type.type === "blob" || type.type === "file"
-      ? coerceFile(output)
-      : coerceString(output, transform),
-  );
+  const transformAction = vTransform(transformFn);
   const schema = type.async
     ? pipeAsync(unknown, transformAction, type)
     : pipe(unknown, transformAction, type);
 
   return { transformAction, schema };
+}
+
+/**
+ * Strip empty strings and convert them to undefined.
+ *
+ * @param value The value to be checked and coerced.
+ * @returns The coerced value or undefined if the input is an empty string.
+ */
+function stripEmptyString(value: unknown) {
+  if (typeof value !== "string") {
+    return value;
+  }
+
+  if (value === "") {
+    return undefined;
+  }
+
+  return value;
+}
+
+/**
+ * Strip empty files and convert them to undefined.
+ *
+ * @param file The file to be checked and coerced.
+ * @returns The coerced value or undefined if the input is an empty file.
+ */
+function stripEmptyFile(file: unknown) {
+  if (
+    typeof File !== "undefined" &&
+    file instanceof File &&
+    file.name === "" &&
+    file.size === 0
+  ) {
+    return undefined;
+  }
+
+  return file;
+}
+
+/**
+ * Helpers for coercing number value
+ * Modify the value only if it's a string, otherwise return the value as-is
+ */
+function coerceNumber(value: unknown) {
+  if (typeof value !== "string") {
+    return value;
+  }
+
+  return value.trim() === "" ? value : Number(value);
+}
+
+/**
+ * Helpers for coercing boolean value
+ * Modify the value only if it's a string, otherwise return the value as-is
+ */
+function coerceBoolean(value: unknown) {
+  if (typeof value !== "string") {
+    return value;
+  }
+
+  return value === "on" ? true : value;
+}
+
+/**
+ * Helpers for coercing date value
+ * Modify the value only if it's a string, otherwise return the value as-is
+ */
+function coerceDate(value: unknown) {
+  if (typeof value !== "string") {
+    return value;
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date;
+}
+
+/**
+ * Helpers for coercing bigint value
+ * Modify the value only if it's a string, otherwise return the value as-is
+ */
+function coerceBigInt(value: unknown) {
+  if (typeof value !== "string") {
+    return value;
+  }
+
+  if (value.trim() === "") {
+    return value;
+  }
+
+  try {
+    return BigInt(value);
+  } catch {
+    return value;
+  }
 }
 
 /**
@@ -78,7 +162,7 @@ function coerceArray<T extends GenericSchema | GenericSchemaAsync>(type: T) {
 
     if (
       typeof output === "undefined" ||
-      typeof coerceFile(coerceString(output)) === "undefined"
+      typeof stripEmptyFile(stripEmptyString(output)) === "undefined"
     ) {
       return [];
     }
@@ -94,36 +178,32 @@ function coerceArray<T extends GenericSchema | GenericSchemaAsync>(type: T) {
 }
 
 /**
- * Helpers for coercing file
- * Modify the value only if it's a file, otherwise return the value as-is
+ * Compose two coercion functions
+ * @param a The first coercion function
+ * @param b The second coercion function
+ * @returns The composed coercion function
  */
-function coerceFile(file: unknown) {
-  if (
-    typeof File !== "undefined" &&
-    file instanceof File &&
-    file.name === "" &&
-    file.size === 0
-  ) {
-    return undefined;
-  }
-
-  return file;
+function compose(a: CoercionFunction, b: CoercionFunction): CoercionFunction {
+  return (value) => b(a(value));
 }
 
 /**
  * Generate a wrapped schema with coercion
  * @param type The schema to be coerced
+ * @param options The options for coercion
  * @param rewrap Whether the result schema should be rewrapped with the `type` schema.
  *   See <https://github.com/chimame/conform-to-valibot/issues/53> for cases that need rewrapping.
  * @returns The coerced schema
  */
 function generateWrappedSchema<T extends GenericSchema | GenericSchemaAsync>(
   type: T,
+  options: EnableTypeCoercionOptions,
   rewrap = false,
 ) {
   const { transformAction, schema: wrapSchema } = enableTypeCoercion(
     // @ts-expect-error
     type.wrapped,
+    options,
   );
 
   if (transformAction) {
@@ -159,13 +239,12 @@ function generateWrappedSchema<T extends GenericSchema | GenericSchemaAsync>(
  * Reconstruct the provided schema with additional preprocessing steps
  * This coerce empty values to undefined and transform strings to the correct type
  */
-export function enableTypeCoercion<
-  T extends GenericSchema | GenericSchemaAsync,
->(
+function enableTypeCoercion<T extends GenericSchema | GenericSchemaAsync>(
   type: T,
+  options: EnableTypeCoercionOptions,
 ): {
   transformAction: TransformAction<unknown, unknown> | undefined;
-  // If we use just `T` for type of `schema`, `enabltTypeCoercion<GenericSchema<string, string>>` will return
+  // If we use just `T` for type of `schema`, `enableTypeCoercion<GenericSchema<string, string>>` will return
   // `GenericSchema<string, string>`. However, we want it to return `GenericSchema<unknown, string>`.
   schema: T extends GenericSchema<unknown, infer Output, infer Issue>
     ? GenericSchema<unknown, Output, Issue>
@@ -173,9 +252,7 @@ export function enableTypeCoercion<
       ? GenericSchemaAsync<unknown, OutputAsync, IssueAsync>
       : never;
 };
-export function enableTypeCoercion<
-  T extends GenericSchema | GenericSchemaAsync,
->(
+function enableTypeCoercion<T extends GenericSchema | GenericSchemaAsync>(
   type:
     | T
     | (T extends GenericSchema
@@ -185,6 +262,7 @@ export function enableTypeCoercion<
         : SchemaWithPipeAsync<
             [T, ...PipeItem<unknown, unknown, BaseIssue<unknown>>[]]
           >),
+  options: EnableTypeCoercionOptions,
 ): {
   transformAction: TransformAction<unknown, unknown> | undefined;
   schema: GenericSchema | GenericSchemaAsync;
@@ -192,6 +270,7 @@ export function enableTypeCoercion<
   if ("pipe" in type) {
     const { transformAction, schema: coercedSchema } = enableTypeCoercion(
       type.pipe[0],
+      options,
     );
     const schema = type.async
       ? pipeAsync(coercedSchema, ...type.pipe.slice(1))
@@ -201,41 +280,40 @@ export function enableTypeCoercion<
     return { transformAction, schema };
   }
 
+  const customizeFn = options.customize(type);
+
+  if (customizeFn) {
+    return coerce(type, customizeFn);
+  }
+
   switch (type.type) {
     case "string":
     case "literal":
     case "enum":
     case "undefined": {
-      return coerce(type);
+      return coerce(type, options.defaultCoercion.string);
     }
     case "number": {
-      return coerce(type, Number);
+      return coerce(type, options.defaultCoercion.number);
     }
     case "boolean": {
-      return coerce(type, (text) => (text === "on" ? true : text));
+      return coerce(type, options.defaultCoercion.boolean);
     }
     case "date": {
-      return coerce(type, (timestamp) => {
-        const date = new Date(timestamp);
-        if (Number.isNaN(date.getTime())) {
-          return timestamp;
-        }
-
-        return date;
-      });
+      return coerce(type, options.defaultCoercion.date);
     }
     case "bigint": {
-      return coerce(type, BigInt);
+      return coerce(type, options.defaultCoercion.bigint);
     }
     case "file":
     case "blob": {
-      return coerce(type);
+      return coerce(type, options.defaultCoercion.file);
     }
     case "array": {
       const arraySchema = {
         ...type,
         // @ts-expect-error
-        item: enableTypeCoercion(type.item).schema,
+        item: enableTypeCoercion(type.item, options).schema,
       };
       return {
         transformAction: undefined,
@@ -244,7 +322,7 @@ export function enableTypeCoercion<
     }
     case "exact_optional": {
       // @ts-expect-error
-      const { schema: wrapSchema } = enableTypeCoercion(type.wrapped);
+      const { schema: wrapSchema } = enableTypeCoercion(type.wrapped, options);
 
       const exactOptionalSchema = {
         ...type,
@@ -258,14 +336,14 @@ export function enableTypeCoercion<
     }
     case "nullish":
     case "optional": {
-      return generateWrappedSchema(type, true);
+      return generateWrappedSchema(type, options, true);
     }
     case "undefinedable":
     case "nullable":
     case "non_optional":
     case "non_nullish":
     case "non_nullable": {
-      return generateWrappedSchema(type);
+      return generateWrappedSchema(type, options);
     }
     case "union":
     case "intersect": {
@@ -274,7 +352,8 @@ export function enableTypeCoercion<
         // @ts-expect-error
         options: type.options.map(
           // @ts-expect-error
-          (option) => enableTypeCoercion(option as GenericSchema).schema,
+          (option) =>
+            enableTypeCoercion(option as GenericSchema, options).schema,
         ),
       };
       return {
@@ -288,7 +367,8 @@ export function enableTypeCoercion<
         // @ts-expect-error
         options: type.options.map(
           // @ts-expect-error
-          (option) => enableTypeCoercion(option as GenericSchema).schema,
+          (option) =>
+            enableTypeCoercion(option as GenericSchema, options).schema,
         ),
       };
       return {
@@ -302,7 +382,7 @@ export function enableTypeCoercion<
         // @ts-expect-error
         items: type.items.map(
           // @ts-expect-error
-          (option) => enableTypeCoercion(option).schema,
+          (option) => enableTypeCoercion(option, options).schema,
         ),
       };
       return {
@@ -316,10 +396,10 @@ export function enableTypeCoercion<
         // @ts-expect-error
         items: type.items.map(
           // @ts-expect-error
-          (option) => enableTypeCoercion(option).schema,
+          (option) => enableTypeCoercion(option, options).schema,
         ),
         // @ts-expect-error
-        rest: enableTypeCoercion(type.rest).schema,
+        rest: enableTypeCoercion(type.rest, options).schema,
       };
       return {
         transformAction: undefined,
@@ -335,7 +415,7 @@ export function enableTypeCoercion<
           // @ts-expect-error
           Object.entries(type.entries).map(([key, def]) => [
             key,
-            enableTypeCoercion(def as GenericSchema).schema,
+            enableTypeCoercion(def as GenericSchema, options).schema,
           ]),
         ),
       };
@@ -352,11 +432,11 @@ export function enableTypeCoercion<
           // @ts-expect-error
           Object.entries(type.entries).map(([key, def]) => [
             key,
-            enableTypeCoercion(def as GenericSchema).schema,
+            enableTypeCoercion(def as GenericSchema, options).schema,
           ]),
         ),
         // @ts-expect-error
-        rest: enableTypeCoercion(type.rest).schema,
+        rest: enableTypeCoercion(type.rest, options).schema,
       };
 
       return {
@@ -366,5 +446,109 @@ export function enableTypeCoercion<
     }
   }
 
-  return coerce(type);
+  return coerce(type, (value) => value);
 }
+
+/**
+ * A helper that enhance the valibot schema to strip empty value and coerce form value to the expected type with option to customize type coercion.
+ * @example
+ *
+ * ```tsx
+ * import { parseWithValibot, unstable_coerceFormValue as coerceFormValue } from '@conform-to/valibot';
+ * import { object, number, date, boolean } from 'valibot';
+ *
+ * // To coerce the form value with default behaviour
+ * const schema = coerceFormValue(
+ *   object({
+ *     ref: number(),
+ *     date: date(),
+ *     amount: number(),
+ *     confirm: boolean(),
+ *   })
+ * );
+ *
+ * // To coerce the form value with number type disabled
+ * const schema = coerceFormValue(
+ *   object({
+ *     ref: number(),
+ *     date: date(),
+ *     amount: number(),
+ *     confirm: boolean(),
+ *   }),
+ *   {
+ *     defaultCoercion: {
+ *       number: false,
+ *     },
+ *     customize: (schema) => {
+ *       if (schema.type === 'string') {
+ *         return (value) => value.trim();
+ *       }
+ *       return null;
+ *     },
+ *   },
+ * );
+ * ```
+ */
+export function coerceFormValue<T extends GenericSchema | GenericSchemaAsync>(
+  type: T,
+  options?: {
+    defaultCoercion?: {
+      [key in DefaultCoercionType]?: CoercionFunction | boolean;
+    };
+    customize?: (
+      type: GenericSchema | GenericSchemaAsync,
+    ) => CoercionFunction | null;
+  },
+): T extends GenericSchema ? GenericSchema : GenericSchemaAsync {
+  return enableTypeCoercion(type, {
+    defaultCoercion: {
+      string: compose(
+        stripEmptyString,
+        getCoercion(options?.defaultCoercion?.string),
+      ),
+      file: compose(
+        stripEmptyFile,
+        getCoercion(options?.defaultCoercion?.file),
+      ),
+      number: compose(
+        stripEmptyString,
+        getCoercion(options?.defaultCoercion?.number, coerceNumber),
+      ),
+      boolean: compose(
+        stripEmptyString,
+        getCoercion(options?.defaultCoercion?.boolean, coerceBoolean),
+      ),
+      date: compose(
+        stripEmptyString,
+        getCoercion(options?.defaultCoercion?.date, coerceDate),
+      ),
+      bigint: compose(
+        stripEmptyString,
+        getCoercion(options?.defaultCoercion?.bigint, coerceBigInt),
+      ),
+    },
+    customize: options?.customize ?? (() => null),
+  }).schema;
+}
+
+/**
+ * Get the coercion function from the provided coercion option
+ * @param providedCoercion The provided coercion option
+ * @param fallbackCoercion The fallback coercion function
+ * @returns The coercion function
+ */
+const getCoercion = (
+  providedCoercion: CoercionFunction | boolean | undefined,
+  fallbackCoercion?: CoercionFunction,
+): CoercionFunction => {
+  if (typeof providedCoercion === "function") {
+    return providedCoercion;
+  }
+
+  // If the user explicitly disabled the coercion or no fallback coercion, return a noop function
+  if (providedCoercion === false || fallbackCoercion === undefined) {
+    return (value) => value;
+  }
+
+  return fallbackCoercion;
+};
