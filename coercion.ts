@@ -12,6 +12,19 @@ import {
   unknown as valibotUnknown,
 } from "valibot";
 
+/**
+ * @deprecated The official valibot support
+ * [library](https://www.npmjs.com/package/@conform-to/valibot)
+ * based on this library has been released.
+ *
+ * This project will be archived in the near future.
+ *
+ * To migrate, just install the official library
+ * ( `npm install @conform-to/valibot` )
+ * and change the reference.
+ *
+ * @see https://www.npmjs.com/package/@conform-to/valibot
+ */
 export type CoercionFunction = (value: unknown) => unknown;
 
 export type DefaultCoercionType =
@@ -454,6 +467,18 @@ function enableTypeCoercion<T extends GenericSchema | GenericSchemaAsync>(
 }
 
 /**
+ * @deprecated The official valibot support
+ * [library](https://www.npmjs.com/package/@conform-to/valibot)
+ * based on this library has been released.
+ *
+ * This project will be archived in the near future.
+ *
+ * To migrate, just install the official library
+ * ( `npm install @conform-to/valibot` )
+ * and change the reference.
+ *
+ * @see https://www.npmjs.com/package/@conform-to/valibot
+ *
  * A helper that enhance the valibot schema to strip empty value and coerce form value to the expected type with option to customize type coercion.
  * @example
  *

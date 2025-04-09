@@ -12,6 +12,19 @@ const keys: Array<keyof Constraint> = [
   "pattern",
 ];
 
+/**
+ * @deprecated The official valibot support
+ * [library](https://www.npmjs.com/package/@conform-to/valibot)
+ * based on this library has been released.
+ *
+ * This project will be archived in the near future.
+ *
+ * To migrate, just install the official library
+ * ( `npm install @conform-to/valibot` )
+ * and change the reference.
+ *
+ * @see https://www.npmjs.com/package/@conform-to/valibot
+ */
 export function getValibotConstraint<
   T extends GenericSchema | GenericSchemaAsync,
 >(schema: T): Record<string, Constraint> {
