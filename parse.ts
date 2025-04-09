@@ -16,6 +16,19 @@ import {
 } from "valibot";
 import { coerceFormValue } from "./coercion";
 
+/**
+ * @deprecated The official valibot support
+ * [library](https://www.npmjs.com/package/@conform-to/valibot)
+ * based on this library has been released.
+ *
+ * This project will be archived in the near future.
+ *
+ * To migrate, just install the official library
+ * ( `npm install @conform-to/valibot` )
+ * and change the reference.
+ *
+ * @see https://www.npmjs.com/package/@conform-to/valibot
+ */
 export const conformValibotMessage = {
   VALIDATION_SKIPPED: "__skipped__",
   VALIDATION_UNDEFINED: "__undefined__",
@@ -23,6 +36,19 @@ export const conformValibotMessage = {
 
 type ErrorType = Record<string, string[] | null> | null;
 
+/**
+ * @deprecated The official valibot support
+ * [library](https://www.npmjs.com/package/@conform-to/valibot)
+ * based on this library has been released.
+ *
+ * This project will be archived in the near future.
+ *
+ * To migrate, just install the official library
+ * ( `npm install @conform-to/valibot` )
+ * and change the reference.
+ *
+ * @see https://www.npmjs.com/package/@conform-to/valibot
+ */
 export function parseWithValibot<Schema extends GenericSchema>(
   payload: FormData | URLSearchParams,
   config: {
@@ -34,6 +60,19 @@ export function parseWithValibot<Schema extends GenericSchema>(
     >;
   },
 ): Submission<InferOutput<Schema>>;
+/**
+ * @deprecated The official valibot support
+ * [library](https://www.npmjs.com/package/@conform-to/valibot)
+ * based on this library has been released.
+ *
+ * This project will be archived in the near future.
+ *
+ * To migrate, just install the official library
+ * ( `npm install @conform-to/valibot` )
+ * and change the reference.
+ *
+ * @see https://www.npmjs.com/package/@conform-to/valibot
+ */
 export function parseWithValibot<Schema extends GenericSchemaAsync>(
   payload: FormData | URLSearchParams,
   config: {
@@ -45,6 +84,19 @@ export function parseWithValibot<Schema extends GenericSchemaAsync>(
     >;
   },
 ): Promise<Submission<InferOutput<Schema>>>;
+/**
+ * @deprecated The official valibot support
+ * [library](https://www.npmjs.com/package/@conform-to/valibot)
+ * based on this library has been released.
+ *
+ * This project will be archived in the near future.
+ *
+ * To migrate, just install the official library
+ * ( `npm install @conform-to/valibot` )
+ * and change the reference.
+ *
+ * @see https://www.npmjs.com/package/@conform-to/valibot
+ */
 export function parseWithValibot<
   Schema extends GenericSchema | GenericSchemaAsync,
 >(
