@@ -215,6 +215,7 @@ function generateWrappedSchema<T extends GenericSchema | GenericSchemaAsync>(
 ) {
   // `expects` is required to generate error messages for `TupleSchema`, so it is passed to `UnkonwSchema` for coercion.
   const unknown = { ...valibotUnknown(), expects: type.expects };
+  const default_ = "default" in type ? type.default : undefined;
   const { transformAction, schema: wrapSchema } = enableTypeCoercion(
     // @ts-expect-error
     type.wrapped,
@@ -227,7 +228,6 @@ function generateWrappedSchema<T extends GenericSchema | GenericSchemaAsync>(
       : pipe(unknown, transformAction, type);
 
     if (rewrap) {
-      const default_ = "default" in type ? type.default : undefined;
       return {
         transformAction: undefined,
         schema: type.reference(schema, default_),
@@ -245,6 +245,13 @@ function generateWrappedSchema<T extends GenericSchema | GenericSchemaAsync>(
   const schema = wrappedSchema.async
     ? pipeAsync(unknown, transformActionForStripEmptyString, wrappedSchema)
     : pipe(unknown, transformActionForStripEmptyString, wrappedSchema);
+
+  if (rewrap) {
+    return {
+      transformAction: undefined,
+      schema: type.reference(schema, default_),
+    };
+  }
 
   return {
     transformAction: undefined,
