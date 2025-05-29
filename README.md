@@ -2,6 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![npm version](https://badge.fury.io/js/conform-to-valibot.svg)](https://badge.fury.io/js/conform-to-valibot)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/chimame/conform-to-valibot)
 
 > [!WARNING]  
 > The official valibot support [library](https://www.npmjs.com/package/@conform-to/valibot) based on this library has been released. This project will be archived in the near future.
